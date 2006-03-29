@@ -130,7 +130,6 @@ void QConsole::moveCursor(CursorAction action, bool select)
     int para, index;
     //save the old cursor position
     getCursorPosition(&para, &index );
-    printf("new pos: %d %d\n",para,promptLength);
     //if home pressed, move the cursor just after the prompt (if in the first line)
     //and select the covered text if needed
     if ( (action == QTEXTEDIT_CLASSNAME::MoveLineStart) && (promptParagraph == para) )
@@ -139,7 +138,6 @@ void QConsole::moveCursor(CursorAction action, bool select)
             setSelection(para, index, para, promptLength);
         else
 	  {
-	    printf("new pos: %d %d\n",para,promptLength);
             setCursorPosition(para, promptLength);
 	  }
         return;
@@ -173,7 +171,6 @@ void QConsole::doKeyboardAction(KeyboardAction action)
     //Get the current paragraph and the current cursor position
     int para, index;
     getCursorPosition(&para, &index );
-    printf("new pos: %d %d\n",para,index);
 
     //Get the cursor
     //QTEXTCURSOR_CLASSNAME *cursor = textCursor();
@@ -184,10 +181,8 @@ void QConsole::doKeyboardAction(KeyboardAction action)
         {
             if ( (promptParagraph == para) && (index == promptLength) )
 	      {
-		printf("do not delete\n");
                 return;
 	      }
-	    printf("do delete: index=%d length=%d\n",index,promptLength);
         }
         break;
 
@@ -287,7 +282,6 @@ void QConsole::keyPressEvent( QKeyEvent *e )
 {
    int para, index;
     getCursorPosition(&para, &index );
-    printf("new pos: %d %d\n",para,index);
 
     //If Ctrl + C pressed, then undo the current command
     if ( (e->key() == Qt::Key_C) && (e->state() == Qt::CONTROL_BUTTON) )
@@ -313,7 +307,6 @@ void QConsole::keyPressEvent( QKeyEvent *e )
         QTEXTEDIT_CLASSNAME::keyPressEvent( e );
 
   getCursorPosition(&para, &index );
-    printf("new pos: %d %d\n",para,index);
 
 }
 
