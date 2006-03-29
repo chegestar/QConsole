@@ -174,9 +174,11 @@ QPyConsole *QPyConsole::getInstance(QWidget *parent, const char *name)
 //QTcl console constructor (init the QTextEdit & the attributes)
 QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name,false),lines(0)
 {
-
+    int result;
+    
+    setColor(cmdColor);
+    append("Welcome to QPyconsole test application.\n");
     //set the Tcl Prompt
-    setPrompt(">>");
     Py_Initialize();
     loc = PyDict_New ();
     glb = PyDict_New ();
@@ -189,25 +191,47 @@ QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name
     PyImport_ImportModule("rlcompleter");
 
     //PyImport_ImportModule("console");
-    PyRun_SimpleString("import sys\n"
-        "import redirector\n"
-        "import console\n"
-        "import rlcompleter\n"
-        "sys.stdout = redirector.redirector()\n"
-        "sys.stderr = sys.stdout\n"
-        "import __builtin__\n"
-        "__builtin__.clear=console.clear\n"
-        "__builtin__.reset=console.reset\n"
-        "__builtin__.save=console.save\n"
-        "__builtin__.load=console.load\n"
-        "__builtin__.history=console.history\n"
-        "__builtin__.quit=console.quit\n"
-        "__builtin__.completer=rlcompleter.Completer()\n"
-    );
+    result=PyRun_SimpleString("import sys\n"
+		       "import redirector\n"
+		       "sys.stdout = redirector.redirector()\n"
+		       "sys.stderr = sys.stdout\n");
+    if (result!=0)
+      {
+	fprintf(stderr,"Initialization of stdout/stderr redirector failed. You will not see any output in the console window.\n");
+	setColor(errColor);
+	append("Initialization of stdout/stderr redirector failed. You will not see any output in the console window.\n");
+      }
 
+    result=PyRun_SimpleString( "import console\n"
+			"import __builtin__\n"
+			"__builtin__.clear=console.clear\n"
+			"__builtin__.reset=console.reset\n"
+			"__builtin__.save=console.save\n"
+			"__builtin__.load=console.load\n"
+			"__builtin__.history=console.history\n"
+			"__builtin__.quit=console.quit\n");
+    if (result!=0)
+      {
+	fprintf(stderr,"Initialization of integrated console functions failed.\n");
+	setColor(errColor);
+	append("Initialization of integrated console functions failed.\n");
+      }
+
+    result=PyRun_SimpleString( "import rlcompleter\n"
+			"__builtin__.completer=rlcompleter.Completer()\n"
+			);
+    if (result!=0)
+      {
+	fprintf(stderr,"Initialization of commandline completer failed. Command completion will not be available.\n");
+	setColor(errColor);
+	append("Initialization of commandline completer failed. Command completion will not be available.\n");
+      }
+    resultString="";
     setCompletionColor(Qt::green);
+    setPrompt(">>");
 
 }
+
 char save_error_type[1024], save_error_info[1024];
  
 bool

@@ -13,7 +13,7 @@ unix {
   MOC_DIR = .moc
   OBJECTS_DIR = .obj
   LIBS += -L$(PYTHON_PATH)/lib/python$(PYTHON_VERSION)/config
-  LIBS += -lpython$(PYTHON_VERSION) -lutil
+  LIBS += -Wl,-E -lpython$(PYTHON_VERSION) -lutil
 }
 
 # Input
