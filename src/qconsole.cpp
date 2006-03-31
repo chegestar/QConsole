@@ -24,7 +24,7 @@
 #include <QKeyEvent>
 #include <Q3PopupMenu>
 //for Q3TextCursor usage
-//#include "q3richtext_p.h"
+#include "q3richtext_p.h"
 #define QTEXTCURSOR_CLASSNAME Q3TextCursor
 #define CONTROL_BUTTON ControlModifier
 #define WRITE_ONLY QIODevice::WriteOnly
@@ -48,7 +48,7 @@ void QConsole::reset()
     clear();
     //set the style of the QTextEdit
     setTextFormat(Qt::PlainText);
-    //    setCurrentFont(QFont("Arial"));
+    setCurrentFont(QFont("Courier"));
     //init attributes
     historyIndex = 0;
     history.clear();
@@ -58,7 +58,7 @@ void QConsole::reset()
 //QConsole constructor (init the QTextEdit & the attributes)
 QConsole::QConsole(QWidget *parent, const char *name, bool initInterceptor) : QTEXTEDIT_CLASSNAME(parent,name),
    cmdColor(Qt::black), errColor(Qt::red), outColor(Qt::blue), completionColor(Qt::green),
-   stdoutInterceptor(NULL), stderrInterceptor(NULL)
+   promptLength(0),stdoutInterceptor(NULL), stderrInterceptor(NULL), promptParagraph(0)
 {
     //resets the console
     reset();
@@ -137,9 +137,7 @@ void QConsole::moveCursor(CursorAction action, bool select)
         if (select)
             setSelection(para, index, para, promptLength);
         else
-	  {
             setCursorPosition(para, promptLength);
-	  }
         return;
     }
     //Process the up & down keys to navigate into the history (if not empty & if in the first line)
@@ -171,35 +169,40 @@ void QConsole::doKeyboardAction(KeyboardAction action)
     //Get the current paragraph and the current cursor position
     int para, index;
     getCursorPosition(&para, &index );
-
     //Get the cursor
-    //QTEXTCURSOR_CLASSNAME *cursor = textCursor();
+    QTEXTCURSOR_CLASSNAME *cursor = textCursor();
     switch (action)
     {
+        case QTEXTEDIT_CLASSNAME::ActionDelete:
+        case QTEXTEDIT_CLASSNAME::ActionWordDelete:
+        {
+            if (!isInEditionZone())
+                return;
+        }
+        break;
+
         //Don't delete the prompt if backspace is pressed
         case QTEXTEDIT_CLASSNAME::ActionBackspace:
         {
-            if ( (promptParagraph == para) && (index == promptLength) )
-	      {
+            if ( (para < promptParagraph) || ( (para == promptParagraph) && (index <= promptLength) ) )
                 return;
-	      }
         }
         break;
 
         //Don't delete the prompt if ctrl+backspace is pressed
-//         case QTEXTEDIT_CLASSNAME::ActionWordBackspace:
-//         {
-//             //trick to get the new position of the cursor
-//             cursor->gotoPreviousWord();
-//             //exit if the new position is out of the edition zone
-//             bool error = false;
-//             if ( !isInEditionZone())
-//                 error = true;
-//             setCursorPosition(para, index);
-//             if (error)
-//                 return;
-//         }
-//         break;
+        case QTEXTEDIT_CLASSNAME::ActionWordBackspace:
+        {
+            //trick to get the new position of the cursor
+            cursor->gotoPreviousWord();
+            //exit if the new position is out of the edition zone
+            bool error = false;
+            if ( !isInEditionZone())
+                error = true;
+            setCursorPosition(para, index);
+            if (error)
+                return;
+        }
+        break;
 
         // If return pressed, do the evaluation and append the result
         case QTEXTEDIT_CLASSNAME::ActionReturn:
@@ -280,9 +283,6 @@ QStringList QConsole::autocompleteCommand(QString)
 //Reimplemented key press event
 void QConsole::keyPressEvent( QKeyEvent *e )
 {
-   int para, index;
-    getCursorPosition(&para, &index );
-
     //If Ctrl + C pressed, then undo the current command
     if ( (e->key() == Qt::Key_C) && (e->state() == Qt::CONTROL_BUTTON) )
         displayPrompt();
@@ -305,9 +305,6 @@ void QConsole::keyPressEvent( QKeyEvent *e )
     }
     else
         QTEXTEDIT_CLASSNAME::keyPressEvent( e );
-
-  getCursorPosition(&para, &index );
-
 }
 
 //Get the current command
@@ -368,7 +365,7 @@ void QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
         QTEXTEDIT_CLASSNAME::insert(command);
     }
     //execute the command and get back its text result and its return value
-    int res;
+    int res = 0;
     QString strRes = interpretCommand(command, &res);
     //According to the return value, display the result either in red or in blue
     if (res == 0)
@@ -436,3 +433,4 @@ void QConsole::paste()
     setCursorPosition(oldPara, oldIndex );
     QTEXTEDIT_CLASSNAME::paste();
 }
+
