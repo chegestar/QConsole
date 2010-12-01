@@ -200,10 +200,11 @@ void QConsole::setHome()
 void QConsole::keyPressEvent( QKeyEvent *e )
 {
     // control is pressed
-    if (e->modifiers() && Qt::ControlModifier) {
+    if (e->modifiers() & Qt::ControlModifier) {
         switch (e->key()) {
         case Qt::Key_C:
             //If Ctrl + C pressed, then undo the current command
+            append("");
             displayPrompt();
             break;
 
