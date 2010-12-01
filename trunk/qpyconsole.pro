@@ -6,7 +6,7 @@ TEMPLATE = app
 DEPENDPATH += include src ui
 INCLUDEPATH += . include $(PYTHON_PATH)/include/python$(PYTHON_VERSION)
 CONFIG  += warn_on debug
-QT += qt3support
+#QT += qt3support
 
 unix {
   UI_DIR = .ui
@@ -19,8 +19,8 @@ unix {
 # Input
 HEADERS += include/interceptor.h \
            include/qpyconsole.h \
-	   include/qconsole.h
+           include/qconsole.h
 SOURCES += src/interceptor.cpp \
            src/pymain.cpp \
            src/qpyconsole.cpp \
-	   src/qconsole.cpp
+           src/qconsole.cpp

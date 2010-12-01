@@ -2,32 +2,36 @@
 // Author: Kuba Ober <kuba@mareimbrium.org>
 // Downloaded from: http://www.ibib.waw.pl/~winnie
 //
-// License:  Public domain
+// License: Public domain
 //
 
 #if ! defined(INLUDED_INTERCEPTOR_H)
 #define INCLUDED_INTERCEPTOR_H
 
-#include <qobject.h>
+#include <QObject>
 
-class QTextIStream;
+class QTextStream;
 class QSocketNotifier;
 
 class Interceptor : public QObject
 {
     Q_OBJECT
-    public:
+        
+public:
     Interceptor(QObject * p = 0);
     ~Interceptor();
-    public slots:
+    
+public Q_SLOTS:
     void initialize(int outFd = 1); // defaults to standard output
     void received();
     void finish();
-    QTextIStream *textIStream() {return m_stream;};
-    signals:
-    void received(QTextIStream *);
-    private:
-    QTextIStream * m_stream;
+    QTextStream *textStream() {return m_stream;};
+    
+Q_SIGNALS:
+    void received(QTextStream *);
+    
+private:
+    QTextStream * m_stream;
     QSocketNotifier * m_notifier;
     int m_pipeFd[2];
     int m_origFd;

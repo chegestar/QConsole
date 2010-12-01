@@ -6,6 +6,8 @@
     email                : houssem.bdioui@gmail.com
  ***************************************************************************/
 
+// migrated to Qt4 by YoungTaek Oh. date: Nov 29, 2010
+
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -19,25 +21,21 @@
 #define QCONSOLE_H
 
 #include "interceptor.h"
-#include <qstringlist.h>
-#if QT_VERSION >= 0x040000
-#include <q3textedit.h>
+#include <QStringList>
+#include <QTextEdit>
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <Q3PopupMenu>
-#define QTEXTEDIT_CLASSNAME Q3TextEdit
-#define QPOPUPMENU_CLASSNAME Q3PopupMenu
-#else
-#include <qtextedit.h>
-#define QTEXTEDIT_CLASSNAME QTextEdit
-#define QPOPUPMENU_CLASSNAME QPopupMenu
+#include <QMenu>
+
+#if QT_VERSION < 0x040000
+#error "supports only Qt 4.0 or greater"
 #endif
 
-/**An abstract Qt console
- *@author Houssem BDIOUI
+/**
+ * An abstract Qt console
+ * @author Houssem BDIOUI
  */
-
-class QConsole : protected  QTEXTEDIT_CLASSNAME
+class QConsole : protected QTextEdit
 {
     Q_OBJECT
 public:
@@ -55,40 +53,40 @@ public:
     void clear();
     void reset();
     //cosmetic methods !
-    void setCmdColor(QColor c) {cmdColor = c;};
-    void setErrColor(QColor c) {errColor = c;};
-    void setOutColor(QColor c) {outColor = c;};
-    void setCompletionColor(QColor c) {completionColor = c;};
-    void setFont(QFont f) {setCurrentFont(f);};
+    void setCmdColor(QColor c) {cmdColor = c;}
+    void setErrColor(QColor c) {errColor = c;}
+    void setOutColor(QColor c) {outColor = c;}
+    void setCompletionColor(QColor c) {completionColor = c;}
+    void setFont(QFont f) {setCurrentFont(f);}
 
 private:
     // Redefined virtual methods
-    void contentsMouseReleaseEvent(QMouseEvent *e);
-    void contentsMousePressEvent(QMouseEvent *e);
-    void contentsMouseDoubleClickEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+    //void mouseDoubleClickEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent * e);
     void paste();
     //Just to disable the popup menu
-    QPOPUPMENU_CLASSNAME * createPopupMenu (const QPoint & pos);
+    QMenu * createPopupMenu (const QPoint & pos);
     //Return false if the command is incomplete (e.g. unmatched braces)
     virtual bool isCommandComplete(QString command);
     //Get the command to validate
     QString getCurrentCommand();
     //Replace current command with a new one
     void replaceCurrentCommand(QString newCommand);
+
     //Test wether the cursor is in the edition zone
     bool isInEditionZone();
+
     //displays redirected stdout/stderr
-    void stdReceived(QTextIStream *s);
+    void stdReceived(QTextStream*);
 
 //protected attributes
 protected:
     //colors
     QColor cmdColor, errColor, outColor, completionColor;
     // Old cursor position
-    int oldPara, oldIndex;
-    // New cursor position !
-    int newPara, newIndex;
+    int oldPosition;
     // cached prompt length
     int promptLength;
     // The prompt string
@@ -116,21 +114,20 @@ protected:
     virtual QStringList autocompleteCommand(QString cmd);
 
 // Redefined virtual slots
-private slots:
-    //Correctly handle the cursor when moved
-    void moveCursor(CursorAction action, bool select);
-    //Reimplemented method
-    void removeSelectedText(int selNum = 0);
-    //Redirect keyboard actions
-    void doKeyboardAction (KeyboardAction action);
+private Q_SLOTS:
+
     //displays the prompt
     void displayPrompt();
-    //Obsolete insert() slot, but still used intensively inside QTextEdit !
-    void insert(const QString & text, bool indent, bool checkNewLine = TRUE, bool removeSelected = TRUE);
 
-signals:
+Q_SIGNALS:
     //Signal emitted after that a command is executed
     void commandExecuted(QString command);
+
+private:
+    void handleTabKeyPress();
+    void handleReturnKeyPress();
+    bool handleBackspaceKeyPress();
+    void setHome();
 };
 
 #endif
