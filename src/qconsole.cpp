@@ -20,6 +20,7 @@
 #include "qconsole.h"
 #include <QFile>
 #include <QTextStream>
+//#include <QDebug>
 
 #define WRITE_ONLY QIODevice::WriteOnly
 
@@ -320,7 +321,8 @@ void QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
     if (writeCommand)
     {
         if (getCurrentCommand() != "")
-            displayPrompt();
+            append("");
+        displayPrompt();
         textCursor().insertText(command);
     }
     //execute the command and get back its text result and its return value
