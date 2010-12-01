@@ -5,16 +5,59 @@
 // License:  Public domain
 //
 
-#include <unistd.h>
+#ifdef WIN32
+#   include <io.h>
+#else
+#   include <unistd.h>
+#endif
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <cassert>
 
-#include <qtextstream.h>
-#include <qsocketnotifier.h>
+#include <QTextStream>
+#include <QSocketNotifier>
 #include "interceptor.h"
+
+#ifdef WIN32
+#include <windows.h>
+#pragma comment(lib, "Ws2_32.lib")
+static inline
+int pipe(int *pfds) {
+    return _pipe(pfds, 1024, O_BINARY);
+}
+
+static inline
+int fsync( int fd )
+{
+    return _commit( fd );
+}
+
+#define F_GETFL 3
+#define F_SETFL 4
+#define O_NONBLOCK 04000
+
+static
+int fcntl(int fd, int cmd, unsigned param )
+{
+    unsigned long	val;
+    if (cmd == F_SETFL && param == O_NONBLOCK)
+    {
+        val = 1;
+        if (ioctlsocket(fd, FIONBIO, &val) == 0)
+            return 0;
+    }
+    return -1;
+}
+
+static inline
+int fcntl(int fd, int cmd)
+{
+    return fcntl(fd, cmd, 0);
+}
+#endif
 
 using namespace std;
 
@@ -63,14 +106,14 @@ void Interceptor::initialize(int outFd)
 
     if (m_stream != 0) delete m_stream;
     if (m_notifier != 0) delete m_notifier;
-    m_stream = new QTextIStream(f);
+    m_stream = new QTextStream(f);
     m_notifier = new QSocketNotifier(m_pipeFd[0], QSocketNotifier::Read);
     QObject::connect(m_notifier, SIGNAL(activated(int)), SLOT(received()));
 }
 
 void Interceptor::received()
 {
-    emit received(m_stream);
+    Q_EMIT received(m_stream);
 }
 
 void Interceptor::finish()

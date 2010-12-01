@@ -46,13 +46,12 @@ int main( int argc, char ** argv )
     QApplication a( argc, argv );
 
     //Create and show the main window
-    QMainWindow mw(0, "Application window");
+    QMainWindow mw;
     mw.setMinimumSize(640, 480);
     //Instantiate and set the focus to the QPyConsole
     QPyConsole *console = QPyConsole::getInstance(&mw);
     mw.setFocusProxy((QWidget*)console);
     mw.setCentralWidget((QWidget*)console);
-    a.setMainWidget(&mw);
     mw.show();
                     
     return a.exec();

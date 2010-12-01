@@ -44,6 +44,19 @@ public:
 
     void printHistory();
 
+protected:
+    //give suggestions to complete a command (not working...)
+    QStringList autocompleteCommand(QString cmd);
+
+    //private constructor
+    QPyConsole(QWidget *parent = NULL, const char *name = NULL);
+
+    //execute a validated command
+    QString interpretCommand(QString command, int *res);
+
+    void setNormalPrompt(bool display) { setPrompt(">>", display); }
+    void setMultilinePrompt(bool display) { setPrompt("...", display); }
+
 private:
 
     //The instance
@@ -58,15 +71,6 @@ private:
 
     // number of lines associated with current command
     int lines;
-    
-    //give suggestions to complete a command (not working...)
-    QStringList autocompleteCommand(QString cmd);
-
-    //private constructor
-    QPyConsole(QWidget *parent = NULL, const char *name = NULL);
-
-    //execute a validated command
-    QString interpretCommand(QString command, int *res);
 };
 
 #endif

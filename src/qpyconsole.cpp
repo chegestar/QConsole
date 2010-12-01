@@ -24,12 +24,18 @@
 
 */
 
-#include <Python.h>
+// modified by YoungTaek Oh.
+
+#ifdef WIN32
+#   undef _DEBUG
+#endif
+#   include <Python.h>
 #include "qpyconsole.h"
+
+#include <QDebug>
 
 PyObject* glb;
 PyObject* loc;
-
 
 QString resultString;
 
@@ -46,7 +52,7 @@ static PyObject* redirector_write(PyObject *, PyObject *args)
 
     if (!PyArg_ParseTuple(args,"Os",&selfi,&output))
     {
- 	return NULL;
+        return NULL;
     }
 
     resultString.append(output);
@@ -106,20 +112,18 @@ static PyObject* py_history(PyObject *, PyObject *)
 
 static PyObject* py_quit(PyObject *, PyObject *)
 {
-    //QPyConsole::getInstance()->printHistory();
     resultString="Use reset() to restart the interpreter; otherwise exit your application\n";
     return Py_None;
 }
 
-
 static PyMethodDef ModuleMethods[] = { {NULL,NULL,0,NULL} };
 static PyMethodDef console_methods[] =  {
     {"clear",py_clear, METH_VARARGS,"clears the console"},
-{"reset",py_reset, METH_VARARGS,"reset the interpreter and clear the console"},
+    {"reset",py_reset, METH_VARARGS,"reset the interpreter and clear the console"},
     {"save",py_save, METH_VARARGS,"save commands up to now in given file"},
-{"load",py_load, METH_VARARGS,"load commands from given file"},
+    {"load",py_load, METH_VARARGS,"load commands from given file"},
     {"history",py_history, METH_VARARGS,"shows the history"},
-{"quit",py_quit, METH_VARARGS,"print information about quitting"},
+    {"quit",py_quit, METH_VARARGS,"print information about quitting"},
 
     {NULL, NULL,0,NULL}
 };
@@ -154,8 +158,7 @@ void QPyConsole::printHistory()
     uint index = 1;
     for ( QStringList::Iterator it = history.begin(); it != history.end(); ++it )
     {
-        // Tcl_AppendResult(interp, QString("%1\t%2\n").arg(index).arg(*it).ascii(), (char*) NULL);
-        resultString.append(QString("%1\t%2\n").arg(index).arg(*it).ascii());
+        resultString.append(QString("%1\t%2\n").arg(index).arg(*it));
         index ++;
     }
 }
@@ -174,70 +177,55 @@ QPyConsole *QPyConsole::getInstance(QWidget *parent, const char *name)
 //QTcl console constructor (init the QTextEdit & the attributes)
 QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name,false),lines(0)
 {
-    int result;
-    
-    setColor(cmdColor);
-    append("Welcome to QPyconsole test application.\n");
-    //set the Tcl Prompt
+    //set the Python Prompt
+    setNormalPrompt(true);
+
     Py_Initialize();
-    loc = PyDict_New ();
-    glb = PyDict_New ();
-    PyDict_SetItemString (glb, "__builtins__", PyEval_GetBuiltins ());
+    /* NOTE: 원래 코드대로 실행을 하게 되면 interpreter에서 함수를 정의할 경우 global name
+             이 존재하지 않는다는 에러가 발생한다. 이것은 interpreter에서 함수를 정의하더라도
+             이것이 global dictionary로 가지 않고, local dictionary에서만 저장되기 때문으로,
+             함수를 사용할 수 없는 버그가 생기게된다. 따라서 두 개의 dictionary를 동일하게 줌으로써
+             global dictionary와 local dictionary를 하나로 통일시켰다. 
+             
+             또한, 이전 코드에서는 새로운 Dictionary를 만들어서 __builtins__의 item string을 
+             복사하였는데, 여기서는 __main__의 dictionary를 가져와서 사용하도록 바꾸었다.
+
+             (in English)
+             In previous implementaion, local name and global name were allocated separately.
+             And it causes a problem that a function declared in this console cannot be called.
+             By unifying global and local name with __main__.__dict__, we can get more natural
+             python console.
+    */
+    PyObject *module = PyImport_ImportModule("__main__");
+    loc = glb = PyModule_GetDict(module);
+    
     initredirector();
-    //Py_InitModule("console", console_methods);
+
     PyImport_AddModule("console");
     Py_InitModule("console", console_methods);
 
     PyImport_ImportModule("rlcompleter");
-
-    //PyImport_ImportModule("console");
-    result=PyRun_SimpleString("import sys\n"
-		       "import redirector\n"
-		       "sys.stdout = redirector.redirector()\n"
-		       "sys.stderr = sys.stdout\n");
-    if (result!=0)
-      {
-	fprintf(stderr,"Initialization of stdout/stderr redirector failed. You will not see any output in the console window.\n");
-	setColor(errColor);
-	append("Initialization of stdout/stderr redirector failed. You will not see any output in the console window.\n");
-      }
-
-    result=PyRun_SimpleString( "import console\n"
-			"import __builtin__\n"
-			"__builtin__.clear=console.clear\n"
-			"__builtin__.reset=console.reset\n"
-			"__builtin__.save=console.save\n"
-			"__builtin__.load=console.load\n"
-			"__builtin__.history=console.history\n"
-			"__builtin__.quit=console.quit\n");
-    if (result!=0)
-      {
-	fprintf(stderr,"Initialization of integrated console functions failed.\n");
-	setColor(errColor);
-	append("Initialization of integrated console functions failed.\n");
-      }
-
-    result=PyRun_SimpleString( "import rlcompleter\n"
-			"__builtin__.completer=rlcompleter.Completer()\n"
-			);
-    if (result!=0)
-      {
-	fprintf(stderr,"Initialization of commandline completer failed. Command completion will not be available.\n");
-	setColor(errColor);
-	append("Initialization of commandline completer failed. Command completion will not be available.\n");
-      }
-    resultString="";
-    setCompletionColor(Qt::green);
-    setPrompt(">>");
-
+    PyRun_SimpleString("import sys\n"
+                       "import redirector\n"
+                       "import console\n"
+                       "import rlcompleter\n"
+                       "sys.stdout = redirector.redirector()\n"
+                       "sys.stderr = sys.stdout\n"
+                       "import __builtin__\n"
+                       "__builtin__.clear=console.clear\n"
+                       "__builtin__.reset=console.reset\n"
+                       "__builtin__.save=console.save\n"
+                       "__builtin__.load=console.load\n"
+                       "__builtin__.history=console.history\n"
+                       "__builtin__.quit=console.quit\n"
+                       "__builtin__.completer=rlcompleter.Completer()\n"
+        );
 }
-
 char save_error_type[1024], save_error_info[1024];
  
 bool
 QPyConsole::py_check_for_unexpected_eof()
 {
- 
     PyObject *errobj, *errdata, *errtraceback, *pystring;
  
     /* get latest python exception info */
@@ -247,25 +235,25 @@ QPyConsole::py_check_for_unexpected_eof()
     if (errobj != NULL &&
         (pystring = PyObject_Str(errobj)) != NULL &&     /* str(object) */
         (PyString_Check(pystring))
-    )
+        )
     {
         strcpy(save_error_type, PyString_AsString(pystring));       
     }
     else
         strcpy(save_error_type, "<unknown exception type>");
     Py_XDECREF(pystring);
- 
+
     pystring = NULL;
     if (errdata != NULL &&
         (pystring = PyObject_Str(errdata)) != NULL &&
         (PyString_Check(pystring))
-    )
+        )
         strcpy(save_error_info, PyString_AsString(pystring));
     else
         strcpy(save_error_info, "<unknown exception data>");
     Py_XDECREF(pystring);
- 
-    if (strcmp(save_error_type,"exceptions.SyntaxError")==0 &&
+
+    if (strstr(save_error_type, "exceptions.SyntaxError")!=NULL &&
         strncmp(save_error_info,"('unexpected EOF while parsing',",32)==0)
     {
         return true;
@@ -292,24 +280,32 @@ QString QPyConsole::interpretCommand(QString command, int *res)
     PyObject* py_result;
     PyObject* dum;
     bool multiline=false;
-    if (!command.isEmpty() || (command.isEmpty() && lines!=0))
+    *res = 0;
+    if (!command.startsWith('#') && (!command.isEmpty() || (command.isEmpty() && lines!=0)))
     {
         this->command.append(command);
-        py_result=Py_CompileString(this->command.ascii(),"<stdin>",Py_single_input);
+        py_result=Py_CompileString(this->command.toAscii(),"<stdin>",Py_single_input);
         if (py_result==0)
         {
             multiline=py_check_for_unexpected_eof();
+            if (!multiline) {
+                if (command.endsWith(':'))
+                    multiline = true;
+            }
+            
             if (multiline)
             {
+                setMultilinePrompt(false);
                 this->command.append("\n");
                 lines++;
                 *res=0;
                 resultString="";
-                QConsole::interpretCommand(command, res);
+                QConsole::interpretCommand(command, res);               
                 return "";
             }
             else
             {
+                setNormalPrompt(false);
                 *res=-1;
                 QString result=resultString;
                 resultString="";		  
@@ -321,6 +317,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
         }
         if ( (lines!=0 && command=="") || (this->command!="" && lines==0))
         {
+            setNormalPrompt(false);
             this->command="";
             this->lines=0;
 
@@ -335,7 +332,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
             QString result=resultString;
             resultString="";
             if (command!="")
-		QConsole::interpretCommand(command, res);
+                QConsole::interpretCommand(command, res);
             return result;
         }
         else if (lines!=0 && command!="") //following multiliner line
@@ -361,21 +358,24 @@ QStringList QPyConsole::autocompleteCommand(QString cmd)
     int n =0;
     QStringList list;
     resultString="";
-    do {
-        snprintf(run,255,"print completer.complete(\"%s\",%d)\n",cmd.ascii(),n);
-        PyRun_SimpleString(run);  
-        resultString=resultString.stripWhiteSpace(); //strip trialing newline
-        if (resultString!="None")
-        {
-            list.append(resultString);
-            resultString="";
-        }
-        else
-        {
-            resultString="";
-            break;
-        }
-        n++;
-    } while (true);
+    if (!cmd.isEmpty()) {
+        do {
+            snprintf(run,255,"print completer.complete(\"%s\",%d)\n",
+                     cmd.toAscii().data(),n);
+            PyRun_SimpleString(run);
+            resultString=resultString.trimmed(); //strip trialing newline
+            if (resultString!="None")
+            {
+                list.append(resultString);
+                resultString="";
+            }
+            else
+            {
+                resultString="";
+                break;
+            }
+            n++;
+        } while (true);
+    }
     return list;
 }
