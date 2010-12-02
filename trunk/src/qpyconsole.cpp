@@ -185,9 +185,9 @@ QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name
              이 존재하지 않는다는 에러가 발생한다. 이것은 interpreter에서 함수를 정의하더라도
              이것이 global dictionary로 가지 않고, local dictionary에서만 저장되기 때문으로,
              함수를 사용할 수 없는 버그가 생기게된다. 따라서 두 개의 dictionary를 동일하게 줌으로써
-             global dictionary와 local dictionary를 하나로 통일시켰다. 
-             
-             또한, 이전 코드에서는 새로운 Dictionary를 만들어서 __builtins__의 item string을 
+             global dictionary와 local dictionary를 하나로 통일시켰다.
+
+             또한, 이전 코드에서는 새로운 Dictionary를 만들어서 __builtins__의 item string을
              복사하였는데, 여기서는 __main__의 dictionary를 가져와서 사용하도록 바꾸었다.
 
              (in English)
@@ -198,7 +198,7 @@ QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name
     */
     PyObject *module = PyImport_ImportModule("__main__");
     loc = glb = PyModule_GetDict(module);
-    
+
     initredirector();
 
     PyImport_AddModule("console");
@@ -222,22 +222,22 @@ QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name
         );
 }
 char save_error_type[1024], save_error_info[1024];
- 
+
 bool
 QPyConsole::py_check_for_unexpected_eof()
 {
     PyObject *errobj, *errdata, *errtraceback, *pystring;
- 
+
     /* get latest python exception info */
     PyErr_Fetch(&errobj, &errdata, &errtraceback);
- 
+
     pystring = NULL;
     if (errobj != NULL &&
         (pystring = PyObject_Str(errobj)) != NULL &&     /* str(object) */
         (PyString_Check(pystring))
         )
     {
-        strcpy(save_error_type, PyString_AsString(pystring));       
+        strcpy(save_error_type, PyString_AsString(pystring));
     }
     else
         strcpy(save_error_type, "<unknown exception type>");
@@ -292,7 +292,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
                 if (command.endsWith(':'))
                     multiline = true;
             }
-            
+
             if (multiline)
             {
                 setMultilinePrompt(false);
@@ -300,7 +300,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
                 lines++;
                 *res=0;
                 resultString="";
-                QConsole::interpretCommand(command, res);               
+                QConsole::interpretCommand(command, res);
                 return "";
             }
             else
@@ -308,7 +308,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
                 setNormalPrompt(false);
                 *res=-1;
                 QString result=resultString;
-                resultString="";		  
+                resultString="";
                 QConsole::interpretCommand(command, res);
                 this->command="";
                 this->lines=0;
@@ -377,5 +377,6 @@ QStringList QPyConsole::autocompleteCommand(QString cmd)
             n++;
         } while (true);
     }
+    list.removeDuplicates();
     return list;
 }

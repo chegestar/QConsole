@@ -72,6 +72,7 @@ private:
     virtual bool isCommandComplete(QString command);
     //Get the command to validate
     QString getCurrentCommand();
+
     //Replace current command with a new one
     void replaceCurrentCommand(QString newCommand);
 
