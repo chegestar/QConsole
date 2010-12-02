@@ -24,6 +24,51 @@
 
 #define WRITE_ONLY QIODevice::WriteOnly
 
+/**
+ * returns a common word of the given list
+ *
+ * @param list String list
+ *
+ * @return common word in the given string.
+ */
+static
+QString getCommonWord(QStringList& list)
+{
+    QChar ch;
+    QVector<QString> strarray = list.toVector();
+    QString common;
+    int col = 0,  min_len;
+    bool cont = true;
+
+    // get minimum length
+    min_len = strarray.at(0).size();
+    for (int i=1; i<strarray.size(); ++i) {
+        const int len = strarray.at(i).size();
+        if (len < min_len)
+            min_len = len;
+    }
+
+    while(col < min_len) {
+        ch = strarray.at(0)[col];
+        for (int i=0; i<strarray.size(); ++i) {
+            const QString& current_string = strarray.at(i);
+            if (ch != current_string[col])
+            {
+                cont = false;
+                break;
+            }
+        }
+        if (!cont)
+            break;
+
+        common.push_back(ch);
+        ++col;
+    }
+    return common;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 //Clear the console
 void QConsole::clear()
 {
@@ -150,15 +195,22 @@ void QConsole::handleTabKeyPress()
     QString str = sl.join(" ");
     if (sl.count() == 0)
         textCursor().insertText("\t");
-    else if (sl.count() == 1)
-        replaceCurrentCommand(sl[0]);
-    else if (sl.count() > 1)
-    {
-        setTextColor(completionColor);
-        append(sl.join(", ") + "\n");
-        setTextColor(cmdColor);
-        displayPrompt();
-        textCursor().insertText(command);
+    else {
+        if (sl.count() == 1)
+            replaceCurrentCommand(sl[0]);
+        else
+        {
+            // common word completion
+            QString commonWord = getCommonWord(sl);
+            if (!commonWord.isEmpty())
+                command = commonWord;
+
+            setTextColor(completionColor);
+            append(sl.join(", ") + "\n");
+            setTextColor(cmdColor);
+            displayPrompt();
+            textCursor().insertText(command);
+        }
     }
 }
 
@@ -195,7 +247,7 @@ void QConsole::setHome()
     cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, promptLength);
     setTextCursor(cursor);
 }
-  
+
 //Reimplemented key press event
 void QConsole::keyPressEvent( QKeyEvent *e )
 {
@@ -224,7 +276,7 @@ void QConsole::keyPressEvent( QKeyEvent *e )
 
         case Qt::Key_Return:
             handleReturnKeyPress();
-            // return key를 무시한다.
+            // ignore return key
             return;
 
         case Qt::Key_Backspace:
