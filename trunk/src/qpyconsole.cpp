@@ -32,7 +32,7 @@
 #   include <Python.h>
 #include "qpyconsole.h"
 
-#include <QDebug>
+//#include <QDebug>
 
 PyObject* glb;
 PyObject* loc;
@@ -209,6 +209,7 @@ QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name
                        "import redirector\n"
                        "import console\n"
                        "import rlcompleter\n"
+                       "sys.path.insert(0, \".\")\n" // add current path to import paths
                        "sys.stdout = redirector.redirector()\n"
                        "sys.stderr = sys.stdout\n"
                        "import __builtin__\n"
