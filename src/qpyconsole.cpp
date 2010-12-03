@@ -55,7 +55,8 @@ static PyObject* redirector_write(PyObject *, PyObject *args)
         return NULL;
     }
 
-    resultString.append(output);
+    QString outputString = QString::fromLocal8Bit(output);
+    resultString.append(outputString);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -285,7 +286,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
     if (!command.startsWith('#') && (!command.isEmpty() || (command.isEmpty() && lines!=0)))
     {
         this->command.append(command);
-        py_result=Py_CompileString(this->command.toAscii(),"<stdin>",Py_single_input);
+        py_result=Py_CompileString(this->command.toLocal8Bit().data(),"<stdin>",Py_single_input);
         if (py_result==0)
         {
             multiline=py_check_for_unexpected_eof();
@@ -299,7 +300,6 @@ QString QPyConsole::interpretCommand(QString command, int *res)
                 setMultilinePrompt(false);
                 this->command.append("\n");
                 lines++;
-                *res=0;
                 resultString="";
                 QConsole::interpretCommand(command, res);
                 return "";
