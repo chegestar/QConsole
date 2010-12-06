@@ -40,24 +40,24 @@ class QConsole : protected QTextEdit
     Q_OBJECT
 public:
     //constructor
-    QConsole(QWidget *parent = NULL, const char *name = NULL, bool initInterceptor = true);
+    QConsole(QWidget *parent = NULL, const QString &welcomeText = "");
     //set the prompt of the console
     void setPrompt(QString prompt, bool display = true);
     //execCommand(QString) executes the command and displays back its result
-    void execCommand(QString command, bool writeCommand = true, bool showPrompt = true);
+    bool execCommand(QString command, bool writeCommand = true, bool showPrompt = true);
     //saves a file script
     int saveScript(QString fileName);
     //loads a file script
     int loadScript(QString fileName);
     //clear & reset the console (useful sometimes)
     void clear();
-    void reset();
+    void reset(const QString &welcomeText = "");
     //cosmetic methods !
-    void setCmdColor(QColor c) {cmdColor = c;}
-    void setErrColor(QColor c) {errColor = c;}
-    void setOutColor(QColor c) {outColor = c;}
-    void setCompletionColor(QColor c) {completionColor = c;}
-    void setFont(QFont f) {setCurrentFont(f);}
+    void setCmdColor(QColor c) {cmdColor = c;};
+    void setErrColor(QColor c) {errColor = c;};
+    void setOutColor(QColor c) {outColor = c;};
+    void setCompletionColor(QColor c) {completionColor = c;};
+    void setFont(QFont f) {setCurrentFont(f);};
 
 private:
     // Redefined virtual methods
@@ -80,7 +80,7 @@ private:
     bool isInEditionZone();
 
     //displays redirected stdout/stderr
-    void stdReceived(QTextStream*);
+    //void stdReceived(QTextIStream *s);
 
 //protected attributes
 protected:
@@ -97,7 +97,7 @@ protected:
     //Contains the commands that has succeeded
     QStringList recordedScript;
     // Current history index (needed because afaik QStringList does not have such an index)
-    uint historyIndex;
+    int historyIndex;
     //Stdout interceptor
     Interceptor *stdoutInterceptor;
     //Stderr interceptor
@@ -112,7 +112,8 @@ protected:
     virtual QString interpretCommand(QString command, int *res);
     //give suggestions to autocomplete a command (should be reimplemented)
     //the return value of the function is the string list of all suggestions
-    virtual QStringList autocompleteCommand(QString cmd);
+    //the returned prefix is useful to complete "sub-commands"
+    virtual QStringList suggestCommand(QString cmd, QString &prefix);
 
 // Redefined virtual slots
 private Q_SLOTS:

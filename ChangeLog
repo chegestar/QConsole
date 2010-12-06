@@ -1,3 +1,20 @@
+Version 3.0
+===========
+- Ported completely to Qt4 (without Qt3 support)
+- Improved the formatting of the help message (help tcl command)
+- carriage return is no more replaced with \n in history list of commands
+- Removed the name paramater in the console constructors
+  and added an HTML welcomeText one that can be displayed at first
+- Removed interceptor class => use tcl channels to redirect tcl output & error
+  into console
+- Improved auto-completion:
+  - Displays the most common word from the suggested list
+  - Auto-complete Tcl commands and sub-commands (located after [ ; { \n)
+- QConsole class:
+   * Identified and removed some conditional jumps using
+     uninitialized variables
+
+
 Version 2.0
 ===========
 - Supports Qt4.x:

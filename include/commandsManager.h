@@ -19,15 +19,8 @@
 #define COMMANDS_MANAGER_H
 
 #include <tcl.h>
-#include <qstringlist.h>
-#include <qmap.h>
-
-#if QT_VERSION >= 0x040000
-#include <q3valuelist.h>
-#define QVALUELIST_CLASSNAME Q3ValueList
-#else
-#define QVALUELIST_CLASSNAME QValueList
-#endif
+#include <QStringList>
+#include <QMap>
 
 /* Singleton helper class to register/unregister tcl callback functions & vars
    along with help messages */
@@ -48,9 +41,11 @@ class commandsManager
     //Registers a string variable
     void registerVariable(char *varName, char *&Var, char *helpMsg);
     //callback method that displays a help message
-    int help( ClientData client_data, Tcl_Interp* interp, int argc, const char *argv[]);
+   int help(ClientData client_data, Tcl_Interp* interp, int argc,
+         const char *argv[]);
     private:
     Tcl_Interp* interp;
+    bool createdInterp;
     static commandsManager *theInstance;
     QMap<QString, QString> commandsHelp;
     QMap<QString, QString> varsHelp;
@@ -70,7 +65,7 @@ class TclCallBack
 
     static int callBackMethod(void* client_data, Tcl_Interp* interp, int argc, const char** argv)
     {
-        typename QVALUELIST_CLASSNAME<commandType>::iterator it1 = method.begin();
+        typename QList<commandType>::iterator it1 = method.begin();
         for ( QStringList::Iterator it = methodNames.begin(); it != methodNames.end(); ++it )
         {
             if (*it == argv[0])
@@ -93,7 +88,7 @@ class TclCallBack
     static void unregisterAll()
     {
         for ( QStringList::Iterator it = methodNames.begin(); it != methodNames.end(); ++it )
-            commandsManager::getInstance()->unregisterFunction(*it);
+            commandsManager::getInstance()->unregisterFunction(qPrintable(*it));
         method.clear();
         methodNames.clear();
     }
@@ -101,14 +96,14 @@ class TclCallBack
     private:
     static Class *instance;
     static QStringList methodNames;
-    static QVALUELIST_CLASSNAME<commandType> method;
+    static QList<commandType> method;
 };
 
 template <class Class>
 Class * TclCallBack<Class>::instance;
 
 template <class Class>
-QVALUELIST_CLASSNAME<typename TclCallBack<Class>::commandType> TclCallBack<Class>::method;
+QList<typename TclCallBack<Class>::commandType> TclCallBack<Class>::method;
 
 template <class Class>
 QStringList TclCallBack<Class>::methodNames;

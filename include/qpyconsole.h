@@ -40,16 +40,18 @@ public:
     ~QPyConsole();
 
     //get the QPyConsole instance
-    static QPyConsole *getInstance(QWidget *parent = NULL, const char *name = NULL);
+    static QPyConsole *getInstance(QWidget *parent = NULL,
+                                   const QString& welcomeText = "");
 
     void printHistory();
 
 protected:
     //give suggestions to complete a command (not working...)
-    QStringList autocompleteCommand(QString cmd);
+    QStringList suggestCommand(QString cmd, QString& prefix);
 
     //private constructor
-    QPyConsole(QWidget *parent = NULL, const char *name = NULL);
+    QPyConsole(QWidget *parent = NULL,
+               const QString& welcomeText = "");
 
     //execute a validated command
     QString interpretCommand(QString command, int *res);

@@ -18,24 +18,72 @@
 #include "qtclconsole.h"
 #include "commands.h"
 #include "commandsManager.h"
+#include <qregexp.h>
+
+int ConsoleOutput(ClientData, CONST char * buf,
+    int toWrite, int *errorCode)
+{
+    static bool lastCR = false;
+    *errorCode = 0;
+    Tcl_SetErrno(0);
+    if (!lastCR)
+    {
+       QtclConsole *console = QtclConsole::getInstance();
+       console->setTextColor(console->outColor);
+       console->append(buf);
+    }
+    lastCR = !lastCR;
+    return toWrite;
+}
+
+int ConsoleError(ClientData, CONST char * buf,
+    int toWrite, int *errorCode)
+{
+    static bool lastCR = false;
+    *errorCode = 0;
+    Tcl_SetErrno(0);
+    if (!lastCR)
+    {
+       QtclConsole *console = QtclConsole::getInstance();
+       console->setTextColor(console->errColor);
+       console->append(buf);
+    }
+    lastCR = !lastCR;
+    return toWrite;
+}
+
+Tcl_ChannelType consoleOutputChannelType =
+{
+    "console1", NULL, NULL, NULL, ConsoleOutput,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL
+};
+
+Tcl_ChannelType consoleErrorChannelType =
+{
+    "console2", NULL, NULL, NULL, ConsoleError,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL
+};
 
 //callback method that implements the history command
-int QtclConsole::showHistory( ClientData, Tcl_Interp* interp, int argc, const char *[])
+int QtclConsole::showHistory(ClientData, Tcl_Interp* interp, int argc, const char *argv[])
 {
+    QString usageMsg = QString("Usage: %1\n").arg(argv[0]);
     // Reset result data
     Tcl_ResetResult(interp);
 
     //Help message in case of wrong parameters
     if (argc != 1)
     {
-        Tcl_AppendResult(interp, "Usage: history\n", (char*) NULL);
+        Tcl_AppendResult(interp, qPrintable(usageMsg), (char*) NULL);
         return TCL_ERROR;
     }
 
     uint index = 1;
     for ( QStringList::Iterator it = history.begin(); it != history.end(); ++it )
     {
-        Tcl_AppendResult(interp, QString("%1\t%2\n").arg(index).arg(*it).ascii(), (char*) NULL);
+        Tcl_AppendResult(interp, qPrintable(QString("%1\t%2\n").arg(index).arg(*it)), (char*) NULL);
         index ++;
     }
 
@@ -43,15 +91,16 @@ int QtclConsole::showHistory( ClientData, Tcl_Interp* interp, int argc, const ch
 }
 
 //callback method that implements the set_prompt command
-int QtclConsole::setPrompt( ClientData, Tcl_Interp* interp, int argc, const char *argv[])
+int QtclConsole::setPrompt(ClientData, Tcl_Interp* interp, int argc, const char *argv[])
 {
+    QString usageMsg = QString("Usage: %1 new_prompt\n").arg(argv[0]);
     // Reset result data
     Tcl_ResetResult(interp);
 
     //Help message in case of wrong parameters
     if (argc != 2)
     {
-        Tcl_AppendResult(interp, "Usage: set_prompt newPrompt\n", (char*) NULL);
+        Tcl_AppendResult(interp, qPrintable(usageMsg), (char*) NULL);
         return TCL_ERROR;
     }
 
@@ -63,13 +112,14 @@ int QtclConsole::setPrompt( ClientData, Tcl_Interp* interp, int argc, const char
 //callback method that calls the saveScript() method
 int QtclConsole::saveScript( ClientData, Tcl_Interp* interp, int argc, const char *argv[])
 {
+    QString usageMsg = QString("Usage: %1 script_file_name\n").arg(argv[0]);
     // Reset result data
     Tcl_ResetResult(interp);
 
     //Help message in case of wrong parameters
     if (argc != 2)
     {
-        Tcl_AppendResult(interp, "Usage: save_script script_name\n", (char*) NULL);
+        Tcl_AppendResult(interp, qPrintable(usageMsg), (char*) NULL);
         return TCL_ERROR;
     }
 
@@ -81,27 +131,52 @@ int QtclConsole::saveScript( ClientData, Tcl_Interp* interp, int argc, const cha
 
 QtclConsole *QtclConsole::theInstance = NULL;
 
-QtclConsole *QtclConsole::getInstance(QWidget *parent, const char *name)
+QtclConsole *QtclConsole::getInstance(QWidget *parent, const QString &welcomeText)
 {
     if (!theInstance)
-        theInstance = new QtclConsole(parent, name);
+        theInstance = new QtclConsole(parent, welcomeText);
     return theInstance;
 }
 
 //QTcl console constructor (init the QTextEdit & the attributes)
-QtclConsole::QtclConsole(QWidget *parent, const char *name) : QConsole(parent,name)
+QtclConsole::QtclConsole(QWidget *parent, const QString &welcomeText) : QConsole(parent, welcomeText)
 {
     //Register the msgbox command
-    TclCallBack<QtclConsole>::registerMethod(this, "history", &QtclConsole::showHistory, "Shows the commands history");
+    TclCallBack<QtclConsole>::registerMethod(this, "history", &QtclConsole::showHistory,
+       "Shows the commands history");
 
     //Register the set_prompt command
-    TclCallBack<QtclConsole>::registerMethod(this, "set_prompt", &QtclConsole::setPrompt, "Set a new prompt");
+    TclCallBack<QtclConsole>::registerMethod(this, "set_prompt", &QtclConsole::setPrompt,
+       "Set a new prompt");
 
     //Register the set_prompt command
-    TclCallBack<QtclConsole>::registerMethod(this, "save_script", &QtclConsole::saveScript, "Saves a script of executed commands");
+    TclCallBack<QtclConsole>::registerMethod(this, "save_script", &QtclConsole::saveScript,
+       "Saves a script of executed commands");
 
     //Get the Tcl interpreter
     interp = commandsManager::getInstance()->tclInterp();
+
+    //init tcl channels to redirect them to the console
+    Tcl_Channel consoleChannel = Tcl_CreateChannel(&consoleOutputChannelType,
+        "console1", (ClientData) TCL_STDOUT, TCL_WRITABLE);
+    if (consoleChannel)
+    {
+        Tcl_SetChannelOption(NULL, consoleChannel,
+            "-translation", "lf");
+        Tcl_SetChannelOption(NULL, consoleChannel,
+            "-buffering", "none");
+    }
+    Tcl_SetStdChannel(consoleChannel, TCL_STDOUT);
+    consoleChannel = Tcl_CreateChannel(&consoleErrorChannelType, "console2",
+        (ClientData) TCL_STDERR, TCL_WRITABLE);
+    if (consoleChannel)
+    {
+        Tcl_SetChannelOption(NULL, consoleChannel,
+            "-translation", "lf");
+        Tcl_SetChannelOption(NULL, consoleChannel,
+            "-buffering", "none");
+    }
+    Tcl_SetStdChannel(consoleChannel, TCL_STDERR);
 
     //set the Tcl Prompt
     QConsole::setPrompt("QTcl shell> ");
@@ -118,35 +193,51 @@ QtclConsole::~QtclConsole()
 //And retrieve back the result
 QString QtclConsole::interpretCommand(QString command, int *res)
 {
+    if (!mutex.tryLock())
+    {
+       *res = 1;
+       return "Command cannot be executed!";
+    }
+    QString result;
     if (!command.isEmpty())
     {
         //Do the Tcl evaluation
-        *res = Tcl_Eval( interp, command.ascii() );
+        *res = Tcl_Eval( interp, qPrintable(command) );
         //Get the string result of the executed command
-        const char * result = Tcl_GetString( Tcl_GetObjResult( interp ) );
+        result = Tcl_GetString(Tcl_GetObjResult(interp));
         //Call the parent implementation
         QConsole::interpretCommand(command, res);
-        return result;
     }
-    else
-        return "";
+    mutex.unlock();
+    return result;
 }
 
 bool QtclConsole::isCommandComplete(QString command)
 {
-    //return Tcl_CommandComplete(command) && (!command.stripWhiteSpace().endsWith("\\"));
-    return Tcl_CommandComplete(command);
+    return Tcl_CommandComplete(qPrintable(command));
 }
 
-QStringList QtclConsole::autocompleteCommand(QString cmd)
+//auto-complete Tcl commands and sub-commands (located after [ ; { \n)
+QStringList QtclConsole::suggestCommand(QString cmd, QString &prefix)
 {
-    int res = Tcl_Eval( interp, "info commands [join {" + cmd + "*}]" );
+    QString commandToComplete = cmd;
+    QStringList suggestions;
+    prefix = "";
+    int i = cmd.lastIndexOf(QRegExp("[\[{;\n]"));
+    if (i != -1)
+    {
+        commandToComplete = cmd.right(cmd.length() - i - 1);
+        prefix = cmd.left(i+1);
+    }
+    int res = Tcl_Eval( interp, qPrintable("info commands [join {" + commandToComplete + "*}]") );
     if (!res)
     {
         //Get the string result of the executed command
-        const char * result = Tcl_GetString( Tcl_GetObjResult( interp ) );
-        return QStringList::split(" ", result);
+        QString result = Tcl_GetString(Tcl_GetObjResult(interp));
+        if (!result.isEmpty())
+        {
+            suggestions = result.split(" ");
+        }
     }
-    else
-        return QStringList();
+    return suggestions;
 }

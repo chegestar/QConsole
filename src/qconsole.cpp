@@ -76,13 +76,19 @@ void QConsole::clear()
 }
 
 //Reset the console
-void QConsole::reset()
+void QConsole::reset(const QString &welcomeText)
 {
     clear();
-
+    //set the style of the QTextEdit
 #ifdef __APPLE__
     setCurrentFont(QFont("Monaco"));
+#else
+    QFont f;
+    f.setFamily("Courier");
+    setCurrentFont(f);
 #endif
+
+    append(welcomeText);
 
     //init attributes
     historyIndex = 0;
@@ -91,25 +97,13 @@ void QConsole::reset()
 }
 
 //QConsole constructor (init the QTextEdit & the attributes)
-QConsole::QConsole(QWidget *parent, const char */*name*/, bool initInterceptor)
+QConsole::QConsole(QWidget *parent, const QString &welcomeText)
     : QTextEdit(parent), cmdColor(Qt::black), errColor(Qt::red),
     outColor(Qt::blue), completionColor(Qt::darkGreen),
-    stdoutInterceptor(NULL), stderrInterceptor(NULL)
+    promptLength(0), promptParagraph(0)
 {
     //resets the console
-    reset();
-
-    if (initInterceptor)
-    {
-        //Initialize the interceptors
-        stdoutInterceptor = new Interceptor(this);
-        stdoutInterceptor->initialize(1);
-        connect(stdoutInterceptor, SIGNAL(received(QTextStream *)), SLOT(displayPrompt()));
-
-        stderrInterceptor = new Interceptor(this);
-        stderrInterceptor->initialize(2);
-        connect(stderrInterceptor, SIGNAL(received(QTextStream *)), SLOT(displayPrompt()));
-    }
+    reset(welcomeText);
 
     const int tabwidth = QFontMetrics(currentFont()).width('a') * 4;
     setTabStopWidth(tabwidth);
@@ -128,17 +122,6 @@ void QConsole::setPrompt(QString newPrompt, bool display)
 //Displays the prompt and move the cursor to the end of the line.
 void QConsole::displayPrompt()
 {
-    //flush the stdout/stderr before displaying the prompt
-    if (stdoutInterceptor)
-    {
-        setTextColor(outColor);
-        stdReceived(stdoutInterceptor->textStream());
-    }
-    if (stderrInterceptor)
-    {
-        setTextColor(errColor);
-        stdReceived(stderrInterceptor->textStream());
-    }
     //displays the prompt
     setTextColor(cmdColor);
     QTextCursor cur = textCursor();
@@ -149,13 +132,6 @@ void QConsole::displayPrompt()
     promptParagraph = cur.blockNumber();
 }
 
-//displays redirected stdout/stderr
-void QConsole::stdReceived(QTextStream *s)
-{
-    QString line;
-    line = s->readAll();
-    textCursor().insertText(line);
-}
 
 //Reimplemented mouse press event
 void QConsole::mousePressEvent( QMouseEvent *e )
@@ -180,10 +156,11 @@ void QConsole::mouseReleaseEvent( QMouseEvent *e )
     }
 }
 
-//give suggestions to autocomplete a command (should be reimplemented)
+//Give suggestions to autocomplete a command (should be reimplemented)
 //the return value of the function is the string list of all suggestions
-QStringList QConsole::autocompleteCommand(QString)
+QStringList QConsole::suggestCommand(QString, QString& prefix)
 {
+    prefix = "";
     return QStringList();
 }
 
@@ -191,25 +168,24 @@ QStringList QConsole::autocompleteCommand(QString)
 void QConsole::handleTabKeyPress()
 {
     QString command = getCurrentCommand();
-    QStringList sl = autocompleteCommand(command);
-    QString str = sl.join(" ");
+    QString commandPrefix;
+    QStringList sl = suggestCommand(command, commandPrefix);
     if (sl.count() == 0)
         textCursor().insertText("\t");
     else {
         if (sl.count() == 1)
-            replaceCurrentCommand(sl[0]);
+            replaceCurrentCommand(commandPrefix + sl[0] + " ");
         else
         {
             // common word completion
             QString commonWord = getCommonWord(sl);
-            if (!commonWord.isEmpty())
-                command = commonWord;
+            command = commonWord;
 
             setTextColor(completionColor);
             append(sl.join(", ") + "\n");
             setTextColor(cmdColor);
             displayPrompt();
-            textCursor().insertText(command);
+            textCursor().insertText(commandPrefix + command);
         }
     }
 }
@@ -289,7 +265,7 @@ void QConsole::keyPressEvent( QKeyEvent *e )
             return;
 
         case Qt::Key_Down:
-            if (++historyIndex >= (uint)history.size())
+            if (++historyIndex >= history.size())
                 historyIndex = history.size() - 1;
             replaceCurrentCommand(history[historyIndex]);
             return;
@@ -368,18 +344,20 @@ QString QConsole::interpretCommand(QString command, int *res)
 }
 
 //execCommand(QString) executes the command and displays back its result
-void QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
+bool QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
 {
     //Display the prompt with the command first
     if (writeCommand)
     {
         if (getCurrentCommand() != "")
+        {
             append("");
-        displayPrompt();
+                displayPrompt();
+        }
         textCursor().insertText(command);
     }
     //execute the command and get back its text result and its return value
-    int res;
+    int res = 0;
     QString strRes = interpretCommand(command, &res);
     //According to the return value, display the result either in red or in blue
     if (res == 0)
@@ -395,6 +373,7 @@ void QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
     //Display the prompt again
     if (showPrompt)
         displayPrompt();
+    return !res;
 }
 
 //saves a file script

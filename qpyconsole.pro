@@ -4,23 +4,26 @@
 
 TEMPLATE = app
 DEPENDPATH += include src ui
-INCLUDEPATH += . include $(PYTHON_PATH)/include/python$(PYTHON_VERSION)
+INCLUDEPATH += . include
 CONFIG  += warn_on debug
-#QT += qt3support
+UI_DIR = .ui
+MOC_DIR = .moc
+OBJECTS_DIR = .obj
+LIBS += -Wl,-E -lpython$(PYTHON_VERSION)
 
 unix {
-  UI_DIR = .ui
-  MOC_DIR = .moc
-  OBJECTS_DIR = .obj
-  LIBS += -L$(PYTHON_PATH)/lib/python$(PYTHON_VERSION)/config
-  LIBS += -Wl,-E -lpython$(PYTHON_VERSION) -lutil
+  INCLUDEPATH += "$(PYTHON_PATH)/include/python$(PYTHON_VERSION)"
+  LIBS += -L"$(PYTHON_PATH)/lib/python$(PYTHON_VERSION)/config" -lutil
+}
+
+win32 {
+  INCLUDEPATH += "$(PYTHON_PATH)/include"
+  LIBS += -L"$(PYTHON_PATH)/libs"
 }
 
 # Input
-HEADERS += include/interceptor.h \
-           include/qpyconsole.h \
+HEADERS += include/qpyconsole.h \
            include/qconsole.h
-SOURCES += src/interceptor.cpp \
-           src/pymain.cpp \
+SOURCES += src/pymain.cpp \
            src/qpyconsole.cpp \
            src/qconsole.cpp
