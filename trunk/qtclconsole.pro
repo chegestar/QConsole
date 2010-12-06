@@ -4,27 +4,22 @@
 
 TEMPLATE = app
 DEPENDPATH += include src ui
-INCLUDEPATH += . include $(TCL_PATH)/include
-CONFIG  += warn_on debug
-QT += qt3support
+INCLUDEPATH += . include "$(TCL_PATH)/include"
+CONFIG  += warn_on relase
 
-unix {
-  UI_DIR = .ui
-  MOC_DIR = .moc
-  OBJECTS_DIR = .obj
-  LIBS += -L$(TCL_PATH)/lib -ltcl8.4
-}
+UI_DIR = .ui
+MOC_DIR = .moc
+OBJECTS_DIR = .obj
+LIBS += -L"$(TCL_PATH)/lib" -ltcl$(TCL_VERSION)
 
 # Input
 HEADERS += include/commands.h \
            include/commandsManager.h \
-           include/interceptor.h \
            include/qtclconsole.h \
            include/qconsole.h \
            include/tclnotify.h
 SOURCES += src/commands.cpp \
            src/commandsManager.cpp \
-           src/interceptor.cpp \
            src/tclmain.cpp \
            src/qtclconsole.cpp \
            src/qconsole.cpp \

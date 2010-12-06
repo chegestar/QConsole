@@ -58,13 +58,13 @@ int main( int argc, char ** argv )
     //Register the msgbox command
     commandsManager::getInstance(interp)->registerFunction("msgbox" , (commandsManager::commandType) CallQMessageBox, "Shows the Qt message box");
     //Create and show the main window
-    QMainWindow mw(0, "Application window");
+    QMainWindow mw;
+    mw.setWindowTitle("Qt/Tcl Console [By Houssem BDIOUI]");
     mw.setMinimumSize(640, 480);
     //Instantiate and set the focus to the QtclConsole
     QtclConsole *console = QtclConsole::getInstance(&mw);
     mw.setFocusProxy((QWidget*)console);
     mw.setCentralWidget((QWidget*)console);
-    a.setMainWidget(&mw);
     mw.show();
 
     return a.exec();

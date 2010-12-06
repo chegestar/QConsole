@@ -1,15 +1,17 @@
-   qtclconsole & qpyconsole samples should be compiled and run
-on every platform Qt (3.x & 4.x) can be compiled on.
+qtclconsole & qpyconsole samples should be compiled and run
+on every platform Qt 4.x can be compiled on.
 
 qtclconsole:
 ============
 
-   The only required library is the TCL library version 8.4 (an older
-version could work as well but the .pro file needs to be modified).
+   The only required library is the TCL library.
 
    If the TCL library is not installed in a standard path, an environment
 variable TCL_PATH should be set to point to the TCL installation path
 (where there's its lib and include directories).
+
+Another environment variable TCL_VERSION should always be set, containing
+the version of the TCL libary (example: 85)
 
 To compile and run the sample, just type:
 
@@ -47,6 +49,7 @@ AUTHORS:
 Houssem BDIOUI   (houssem.bdioui@gmail.com)
 Mondrian NUESSLE (nuessle@uni-mannheim.de)
 Ulrich Ring
+YoungTaek Oh (youngtaek.oh@gmail.com)
 
 Enjoy :)
 

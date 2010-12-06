@@ -166,30 +166,31 @@ void QPyConsole::printHistory()
 
 QPyConsole *QPyConsole::theInstance = NULL;
 
-QPyConsole *QPyConsole::getInstance(QWidget *parent, const char *name)
+QPyConsole *QPyConsole::getInstance(QWidget *parent, const QString& welcomeText)
 {
     if (!theInstance)
     {
-        theInstance = new QPyConsole(parent, name);
+        theInstance = new QPyConsole(parent, welcomeText);
     }
     return theInstance;
 }
 
 //QTcl console constructor (init the QTextEdit & the attributes)
-QPyConsole::QPyConsole(QWidget *parent, const char *name) : QConsole(parent,name,false),lines(0)
+QPyConsole::QPyConsole(QWidget *parent, const QString& welcomeText) :
+        QConsole(parent, welcomeText),lines(0)
 {
     //set the Python Prompt
     setNormalPrompt(true);
 
     Py_Initialize();
-    /* NOTE: 원래 코드대로 실행을 하게 되면 interpreter에서 함수를 정의할 경우 global name
-             이 존재하지 않는다는 에러가 발생한다. 이것은 interpreter에서 함수를 정의하더라도
-             이것이 global dictionary로 가지 않고, local dictionary에서만 저장되기 때문으로,
-             함수를 사용할 수 없는 버그가 생기게된다. 따라서 두 개의 dictionary를 동일하게 줌으로써
+    /* NOTE: 원래 코드대로 실행을 하게 되면 interpreter에서 함수를 � �의�  경우 global name
+             이 존재하지 않는다는 에러가 발생한다. 이것은 interpreter에서 함수를 � �의하더라도
+             이것이 global dictionary로 가지 않� , local dictionary에서만 � �장되기 때문으로,
+             함수를 사용�  수 없는 버그가 생기게된다. 따라서 두 개의 dictionary를 동일하게 줌으로써
              global dictionary와 local dictionary를 하나로 통일시켰다.
 
-             또한, 이전 코드에서는 새로운 Dictionary를 만들어서 __builtins__의 item string을
-             복사하였는데, 여기서는 __main__의 dictionary를 가져와서 사용하도록 바꾸었다.
+             또한, 이� � 코드에서는 새로운 Dictionary를 만들어서 __builtins__의 item string을
+             복사하였는데, 여기서는 __main__의 dictionary를 가� �와서 사용하도록 바꾸었다.
 
              (in English)
              In previous implementaion, local name and global name were allocated separately.
@@ -353,11 +354,12 @@ QString QPyConsole::interpretCommand(QString command, int *res)
         return "";
 }
 
-QStringList QPyConsole::autocompleteCommand(QString cmd)
+QStringList QPyConsole::suggestCommand(QString cmd, QString& prefix)
 {
     char run[255];
     int n =0;
     QStringList list;
+    prefix = "";
     resultString="";
     if (!cmd.isEmpty()) {
         do {
