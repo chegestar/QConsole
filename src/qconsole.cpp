@@ -50,7 +50,7 @@ QString getCommonWord(QStringList& list)
 
     while(col < min_len) {
         ch = strarray.at(0)[col];
-        for (int i=0; i<strarray.size(); ++i) {
+        for (int i=1; i<strarray.size(); ++i) {
             const QString& current_string = strarray.at(i);
             if (ch != current_string[col])
             {
@@ -110,7 +110,7 @@ QConsole::QConsole(QWidget *parent, const QString &welcomeText)
 }
 
 //Sets the prompt and cache the prompt length to optimize the processing speed
-void QConsole::setPrompt(QString newPrompt, bool display)
+void QConsole::setPrompt(const QString &newPrompt, bool display)
 {
     prompt = newPrompt;
     promptLength = prompt.length();
@@ -158,7 +158,7 @@ void QConsole::mouseReleaseEvent( QMouseEvent *e )
 
 //Give suggestions to autocomplete a command (should be reimplemented)
 //the return value of the function is the string list of all suggestions
-QStringList QConsole::suggestCommand(QString, QString& prefix)
+QStringList QConsole::suggestCommand(const QString&, QString& prefix)
 {
     prefix = "";
     return QStringList();
@@ -304,7 +304,7 @@ QString QConsole::getCurrentCommand()
 }
 
 //Replace current command with a new one
-void QConsole::replaceCurrentCommand(QString newCommand)
+void QConsole::replaceCurrentCommand(const QString &newCommand)
 {
     QTextCursor cursor = textCursor();
     cursor.movePosition(QTextCursor::StartOfLine);
@@ -314,7 +314,7 @@ void QConsole::replaceCurrentCommand(QString newCommand)
 }
 
 //default implementation: command always complete
-bool QConsole::isCommandComplete(QString )
+bool QConsole::isCommandComplete(const QString &)
 {
     return true;
 }
@@ -330,21 +330,23 @@ bool QConsole::isInEditionZone()
 
 //Basically, puts the command into the history list
 //And emits a signal (should be called by reimplementations)
-QString QConsole::interpretCommand(QString command, int *res)
+QString QConsole::interpretCommand(const QString &command, int *res)
 {
     //Add the command to the recordedScript list
     if (!*res)
         recordedScript.append(command);
     //update the history and its index
-    history.append(command.replace("\n", "\\n"));
+    QString modifiedCommand = command;
+    modifiedCommand.replace("\n", "\\n");
+    history.append(modifiedCommand);
     historyIndex = history.size();
     //emit the commandExecuted signal
-    Q_EMIT commandExecuted(command);
+    Q_EMIT commandExecuted(modifiedCommand);
     return "";
 }
 
 //execCommand(QString) executes the command and displays back its result
-bool QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
+bool QConsole::execCommand(const QString &command, bool writeCommand, bool showPrompt)
 {
     //Display the prompt with the command first
     if (writeCommand)
@@ -352,7 +354,7 @@ bool QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
         if (getCurrentCommand() != "")
         {
             append("");
-                displayPrompt();
+            displayPrompt();
         }
         textCursor().insertText(command);
     }
@@ -377,7 +379,7 @@ bool QConsole::execCommand(QString command, bool writeCommand, bool showPrompt)
 }
 
 //saves a file script
-int QConsole::saveScript(QString fileName)
+int QConsole::saveScript(const QString &fileName)
 {
     QFile f(fileName);
     if (!f.open(WRITE_ONLY))
@@ -391,7 +393,7 @@ int QConsole::saveScript(QString fileName)
 }
 
 //loads a file script
-int QConsole::loadScript(QString fileName)
+int QConsole::loadScript(const QString &fileName)
 {
     QFile f(fileName);
     if (!f.open(QIODevice::ReadOnly))

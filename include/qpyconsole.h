@@ -47,14 +47,14 @@ public:
 
 protected:
     //give suggestions to complete a command (not working...)
-    QStringList suggestCommand(QString cmd, QString& prefix);
+    QStringList suggestCommand(const QString &cmd, QString& prefix);
 
     //private constructor
     QPyConsole(QWidget *parent = NULL,
                const QString& welcomeText = "");
 
     //execute a validated command
-    QString interpretCommand(QString command, int *res);
+    QString interpretCommand(const QString &command, int *res);
 
     void setNormalPrompt(bool display) { setPrompt(">>", display); }
     void setMultilinePrompt(bool display) { setPrompt("...", display); }

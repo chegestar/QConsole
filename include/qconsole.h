@@ -20,7 +20,6 @@
 #ifndef QCONSOLE_H
 #define QCONSOLE_H
 
-#include "interceptor.h"
 #include <QStringList>
 #include <QTextEdit>
 #include <QMouseEvent>
@@ -42,22 +41,22 @@ public:
     //constructor
     QConsole(QWidget *parent = NULL, const QString &welcomeText = "");
     //set the prompt of the console
-    void setPrompt(QString prompt, bool display = true);
+    void setPrompt(const QString &prompt, bool display = true);
     //execCommand(QString) executes the command and displays back its result
-    bool execCommand(QString command, bool writeCommand = true, bool showPrompt = true);
+    bool execCommand(const QString &command, bool writeCommand = true, bool showPrompt = true);
     //saves a file script
-    int saveScript(QString fileName);
+    int saveScript(const QString &fileName);
     //loads a file script
-    int loadScript(QString fileName);
+    int loadScript(const QString &fileName);
     //clear & reset the console (useful sometimes)
     void clear();
     void reset(const QString &welcomeText = "");
     //cosmetic methods !
-    void setCmdColor(QColor c) {cmdColor = c;};
-    void setErrColor(QColor c) {errColor = c;};
-    void setOutColor(QColor c) {outColor = c;};
-    void setCompletionColor(QColor c) {completionColor = c;};
-    void setFont(QFont f) {setCurrentFont(f);};
+    void setCmdColor(QColor c) {cmdColor = c;}
+    void setErrColor(QColor c) {errColor = c;}
+    void setOutColor(QColor c) {outColor = c;}
+    void setCompletionColor(QColor c) {completionColor = c;}
+    void setFont(QFont f) {setCurrentFont(f);}
 
 private:
     // Redefined virtual methods
@@ -67,14 +66,14 @@ private:
     void keyPressEvent(QKeyEvent * e);
     void paste();
     //Just to disable the popup menu
-    QMenu * createPopupMenu (const QPoint & pos);
+    QMenu * createPopupMenu (const QPoint &pos);
     //Return false if the command is incomplete (e.g. unmatched braces)
-    virtual bool isCommandComplete(QString command);
+    virtual bool isCommandComplete(const QString &command);
     //Get the command to validate
     QString getCurrentCommand();
 
     //Replace current command with a new one
-    void replaceCurrentCommand(QString newCommand);
+    void replaceCurrentCommand(const QString &newCommand);
 
     //Test wether the cursor is in the edition zone
     bool isInEditionZone();
@@ -98,10 +97,6 @@ protected:
     QStringList recordedScript;
     // Current history index (needed because afaik QStringList does not have such an index)
     int historyIndex;
-    //Stdout interceptor
-    Interceptor *stdoutInterceptor;
-    //Stderr interceptor
-    Interceptor *stderrInterceptor;
     //Holds the paragraph number of the prompt (useful for multi-line command handling)
     int promptParagraph;
 
@@ -109,11 +104,11 @@ protected:
     //execute a validated command (should be reimplemented and called at the end)
     //the return value of the function is the string result
     //res must hold back the return value of the command (0: passed; else: error)
-    virtual QString interpretCommand(QString command, int *res);
+    virtual QString interpretCommand(const QString &command, int *res);
     //give suggestions to autocomplete a command (should be reimplemented)
     //the return value of the function is the string list of all suggestions
     //the returned prefix is useful to complete "sub-commands"
-    virtual QStringList suggestCommand(QString cmd, QString &prefix);
+    virtual QStringList suggestCommand(const QString &cmd, QString &prefix);
 
 // Redefined virtual slots
 private Q_SLOTS:
@@ -123,7 +118,7 @@ private Q_SLOTS:
 
 Q_SIGNALS:
     //Signal emitted after that a command is executed
-    void commandExecuted(QString command);
+    void commandExecuted(const QString &command);
 
 private:
     void handleTabKeyPress();
