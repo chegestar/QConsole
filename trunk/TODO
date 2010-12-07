@@ -1,0 +1,8 @@
+- Tcl:
+  * puts does'nt output on console
+- QConsole:
+  * Disable Undo
+  * Home don't work well in multi-line commands
+  * We still can write outside edition zone (using mouse tricks)
+  * Add support for Ctrl+C : example, stop current command execution
+  * Implement a pager

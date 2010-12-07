@@ -30,10 +30,10 @@
 class QtclConsole : public QConsole
 {
     friend int ConsoleOutput(ClientData, CONST char * buf,
-       int toWrite, int *errorCode);
+                             int toWrite, int *errorCode);
     friend int ConsoleError(ClientData, CONST char * buf,
-       int toWrite, int *errorCode);
-    public:
+                            int toWrite, int *errorCode);
+public:
     //destructor
     ~QtclConsole();
     //callback method that implements the history command
@@ -45,22 +45,22 @@ class QtclConsole : public QConsole
     //get the QtclConsole instance
     static QtclConsole *getInstance(QWidget *parent = NULL, const QString &welcomeText = "");
 
-    private:
+private:
     //Tcl interpreter
     Tcl_Interp *interp;
     //The instance
     static QtclConsole *theInstance;
     QMutex mutex;
 
-    private:
+private:
     //Return false if the tcl command is incomplete (e.g. unmatched braces)
-    bool isCommandComplete(QString command);
+    bool isCommandComplete(const QString &command);
     //private constructor
     QtclConsole(QWidget *parent = NULL, const QString &welcomeText = "");
     //execute a validated command
-    QString interpretCommand(QString command, int *res);
+    QString interpretCommand(const QString &command, int *res);
     //give suggestions to autocomplete a command
-    QStringList suggestCommand(QString cmd, QString& prefix);
+    QStringList suggestCommand(const QString &cmd, QString& prefix);
 };
 
 #endif

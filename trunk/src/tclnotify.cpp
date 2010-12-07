@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2005 by Ulrich Ring
+ * 2010: Houssem BDIOUI: ported to Qt4
  *
  * This is a clone of the file unix/tclNotify.c from the
  * Tcl distribution.

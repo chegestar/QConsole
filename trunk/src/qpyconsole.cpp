@@ -29,7 +29,7 @@
 #ifdef WIN32
 #   undef _DEBUG
 #endif
-#   include <Python.h>
+#include <Python.h>
 #include "qpyconsole.h"
 
 //#include <QDebug>
@@ -278,7 +278,7 @@ QPyConsole::~QPyConsole()
 
 //Call the Python interpreter to execute the command
 //retrieve back results using the python internal stdout/err redirectory (see above)
-QString QPyConsole::interpretCommand(QString command, int *res)
+QString QPyConsole::interpretCommand(const QString &command, int *res)
 {
     PyObject* py_result;
     PyObject* dum;
@@ -354,7 +354,7 @@ QString QPyConsole::interpretCommand(QString command, int *res)
         return "";
 }
 
-QStringList QPyConsole::suggestCommand(QString cmd, QString& prefix)
+QStringList QPyConsole::suggestCommand(const QString &cmd, QString& prefix)
 {
     char run[255];
     int n =0;

@@ -191,7 +191,7 @@ QtclConsole::~QtclConsole()
 
 //Call the TCL interpreter to execute the command
 //And retrieve back the result
-QString QtclConsole::interpretCommand(QString command, int *res)
+QString QtclConsole::interpretCommand(const QString &command, int *res)
 {
     if (!mutex.tryLock())
     {
@@ -212,13 +212,13 @@ QString QtclConsole::interpretCommand(QString command, int *res)
     return result;
 }
 
-bool QtclConsole::isCommandComplete(QString command)
+bool QtclConsole::isCommandComplete(const QString &command)
 {
     return Tcl_CommandComplete(qPrintable(command));
 }
 
 //auto-complete Tcl commands and sub-commands (located after [ ; { \n)
-QStringList QtclConsole::suggestCommand(QString cmd, QString &prefix)
+QStringList QtclConsole::suggestCommand(const QString &cmd, QString &prefix)
 {
     QString commandToComplete = cmd;
     QStringList suggestions;

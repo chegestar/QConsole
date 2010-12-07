@@ -48,10 +48,12 @@ int main( int argc, char ** argv )
 #ifdef FIX__CTYPE_
     ctSetup();
 #endif
+    //init tcl
     Tcl_FindExecutable(argv[0]);
     Tcl_Interp * interp = Tcl_CreateInterp();
     Tcl_Init( interp );
 
+    //Qt application
     QApplication a( argc, argv );
     Tcl_SetServiceMode (TCL_SERVICE_ALL);
     Qtk_InitNotifier( &a );
