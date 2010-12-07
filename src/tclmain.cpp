@@ -62,7 +62,9 @@ int main( int argc, char ** argv )
     mw.setWindowTitle("Qt/Tcl Console [By Houssem BDIOUI]");
     mw.setMinimumSize(640, 480);
     //Instantiate and set the focus to the QtclConsole
-    QtclConsole *console = QtclConsole::getInstance(&mw);
+    QtclConsole *console = QtclConsole::getInstance(&mw,
+                                                    "Welcome to <b>Qt / Tcl console</b> !<br>"
+                                                    "For any remarks, please mail me at: <font color=blue>houssem.bdioui@gmail.com</font><br><br>");
     mw.setFocusProxy((QWidget*)console);
     mw.setCentralWidget((QWidget*)console);
     mw.show();
