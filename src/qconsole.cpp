@@ -22,6 +22,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QVBoxLayout>
+#include <QApplication>
 
 #define USE_POPUP_COMPLETER
 #define WRITE_ONLY QIODevice::WriteOnly
@@ -130,10 +131,13 @@ void QConsole::reset(const QString &welcomeText)
 
 //QConsole constructor (init the QTextEdit & the attributes)
 QConsole::QConsole(QWidget *parent, const QString &welcomeText)
-    : QTextEdit(parent), cmdColor(Qt::black), errColor(Qt::red),
+    : QTextEdit(parent), errColor(Qt::red),
       outColor(Qt::blue), completionColor(Qt::darkGreen),
       promptLength(0), promptParagraph(0)
 {
+    QPalette palette = QApplication::palette();
+    setCmdColor(palette.text().color());
+
     //resets the console
     reset(welcomeText);
 
