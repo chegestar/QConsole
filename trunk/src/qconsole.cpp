@@ -20,7 +20,7 @@
 #include "qconsole.h"
 #include <QFile>
 #include <QTextStream>
-//#include <QDebug>
+#include <QDebug>
 
 #define WRITE_ONLY QIODevice::WriteOnly
 
@@ -271,9 +271,10 @@ void QConsole::keyPressEvent( QKeyEvent *e )
             return;
 
         case Qt::Key_Up:
-            if (historyIndex)
+            if (historyIndex) {
                 historyIndex--;
-            replaceCurrentCommand(history[historyIndex]);
+                replaceCurrentCommand(history[historyIndex]);
+            }
             return;
 
         default:
