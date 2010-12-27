@@ -21,8 +21,49 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
+#include <QVBoxLayout>
 
+#define USE_POPUP_COMPLETER
 #define WRITE_ONLY QIODevice::WriteOnly
+
+PopupCompleter::PopupCompleter(const QStringList& sl, QWidget *parent)
+    : QDialog(parent, Qt::Popup)
+{
+    setModal(true);
+
+    listWidget_ = new QListWidget();
+    int row = 0;
+    Q_FOREACH(QString str, sl) {
+        QListWidgetItem *item = new QListWidgetItem;
+        item->setText(str);
+        listWidget_->insertItem(row++, item);
+    }
+
+    QLayout *layout = new QVBoxLayout();
+    layout->addWidget(listWidget_);
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    setLayout(layout);
+
+    // connect signal
+    connect(listWidget_, SIGNAL(itemActivated(QListWidgetItem *)),
+            SLOT(onItemActivated(QListWidgetItem*)));
+}
+
+PopupCompleter::~PopupCompleter()
+{
+}
+
+void PopupCompleter::showEvent(QShowEvent *event)
+{
+    listWidget_->setFocus();
+}
+
+void PopupCompleter::onItemActivated(QListWidgetItem *event)
+{
+    selected_ = event->text();
+    done(QDialog::Accepted);
+}
 
 /**
  * returns a common word of the given list
@@ -181,11 +222,22 @@ void QConsole::handleTabKeyPress()
             QString commonWord = getCommonWord(sl);
             command = commonWord;
 
+#ifdef USE_POPUP_COMPLETER
+            PopupCompleter *popup = new PopupCompleter(sl);
+            QPoint globalPt = mapToGlobal(cursorRect().bottomRight());
+
+            popup->move(globalPt);
+            popup->setFocus();
+            if (popup->exec() == QDialog::Accepted)
+                replaceCurrentCommand(commandPrefix + popup->selected());
+            delete popup;
+#else
             setTextColor(completionColor);
             append(sl.join(", ") + "\n");
             setTextColor(cmdColor);
             displayPrompt();
             textCursor().insertText(commandPrefix + command);
+#endif
         }
     }
 }

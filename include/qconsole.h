@@ -1,3 +1,4 @@
+/* -*- mode: c++ -*- */
 /***************************************************************************
                           qconsole.h  -  description
                              -------------------
@@ -26,9 +27,43 @@
 #include <QKeyEvent>
 #include <QMenu>
 
+#include <QDialog>
+#include <QListWidget>
+
 #if QT_VERSION < 0x040000
 #error "supports only Qt 4.0 or greater"
 #endif
+
+/**
+ *  Popup Completer class
+ *
+ *  @author YoungTaek Oh
+ *  @todo 1. beautifying
+ *        2. icons for classifying words (eg. functions, properties...)
+ *        3. bugs?
+ *  @note still experimental
+ */
+class PopupCompleter : public QDialog
+{
+    Q_OBJECT
+
+public:
+    PopupCompleter(const QStringList&, QWidget *parent = 0);
+    virtual ~PopupCompleter();
+
+public:
+    QString selected(void) { return selected_; }
+
+protected:
+    virtual void showEvent(QShowEvent*);
+
+private Q_SLOTS:
+    void onItemActivated(QListWidgetItem*);
+
+public:
+    QListWidget *listWidget_;
+    QString selected_;
+};
 
 /**
  * An abstract Qt console
