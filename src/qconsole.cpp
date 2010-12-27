@@ -79,15 +79,6 @@ void QConsole::clear()
 void QConsole::reset(const QString &welcomeText)
 {
     clear();
-    //set the style of the QTextEdit
-#ifdef __APPLE__
-    setCurrentFont(QFont("Monaco"));
-#else
-    QFont f;
-    f.setFamily("Courier");
-    setCurrentFont(f);
-#endif
-
     append(welcomeText);
 
     //init attributes
@@ -99,14 +90,23 @@ void QConsole::reset(const QString &welcomeText)
 //QConsole constructor (init the QTextEdit & the attributes)
 QConsole::QConsole(QWidget *parent, const QString &welcomeText)
     : QTextEdit(parent), cmdColor(Qt::black), errColor(Qt::red),
-    outColor(Qt::blue), completionColor(Qt::darkGreen),
-    promptLength(0), promptParagraph(0)
+      outColor(Qt::blue), completionColor(Qt::darkGreen),
+      promptLength(0), promptParagraph(0)
 {
     //resets the console
     reset(welcomeText);
 
     const int tabwidth = QFontMetrics(currentFont()).width('a') * 4;
     setTabStopWidth(tabwidth);
+
+    //set the style of the QTextEdit
+#ifdef __APPLE__
+    setCurrentFont(QFont("Monaco"));
+#else
+    QFont f;
+    f.setFamily("Courier");
+    setCurrentFont(f);
+#endif
 }
 
 //Sets the prompt and cache the prompt length to optimize the processing speed
