@@ -35,6 +35,29 @@
 #endif
 
 /**
+ * Subclasssing QListWidget
+ *
+ * @author YoungTaek Oh
+ */
+class PopupListWidget : public QListWidget
+{
+    Q_OBJECT
+
+public:
+    PopupListWidget(QWidget *parent = 0): QListWidget(parent) { }
+    virtual ~PopupListWidget() { }
+
+protected:
+    virtual void keyPressEvent(QKeyEvent *e) {
+        if (e->key() == Qt::Key_Tab ||
+            e->key() == Qt::Key_Return)
+            Q_EMIT itemActivated(currentItem());
+        else
+            QListWidget::keyPressEvent(e);
+    }
+};
+
+/**
  *  Popup Completer class
  *
  *  @author YoungTaek Oh
@@ -56,6 +79,7 @@ public:
 
 protected:
     virtual void showEvent(QShowEvent*);
+    virtual QSize sizeHint() const { return QSize(50, 20); }
 
 private Q_SLOTS:
     void onItemActivated(QListWidgetItem*);
