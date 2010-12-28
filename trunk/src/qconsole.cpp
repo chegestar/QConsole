@@ -32,12 +32,11 @@ PopupCompleter::PopupCompleter(const QStringList& sl, QWidget *parent)
 {
     setModal(true);
 
-    listWidget_ = new QListWidget();
-    int row = 0;
+    listWidget_ = new PopupListWidget();
     Q_FOREACH(QString str, sl) {
         QListWidgetItem *item = new QListWidgetItem;
         item->setText(str);
-        listWidget_->insertItem(row++, item);
+        listWidget_->addItem(item);
     }
 
     QLayout *layout = new QVBoxLayout();
@@ -55,7 +54,7 @@ PopupCompleter::~PopupCompleter()
 {
 }
 
-void PopupCompleter::showEvent(QShowEvent *event)
+void PopupCompleter::showEvent(QShowEvent */*event*/)
 {
     listWidget_->setFocus();
 }
