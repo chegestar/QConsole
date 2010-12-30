@@ -29,6 +29,7 @@
 
 #include <QDialog>
 #include <QListWidget>
+#include <QDebug>
 
 #if QT_VERSION < 0x040000
 #error "supports only Qt 4.0 or greater"
@@ -44,10 +45,14 @@ class PopupListWidget : public QListWidget
     Q_OBJECT
 
 public:
-    PopupListWidget(QWidget *parent = 0): QListWidget(parent) { }
+    PopupListWidget(QWidget *parent = 0): QListWidget(parent) {
+        setUniformItemSizes(true);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
     virtual ~PopupListWidget() { }
 
 protected:
+    virtual QSize sizeHint() const;
     virtual void keyPressEvent(QKeyEvent *e) {
         if (e->key() == Qt::Key_Tab ||
             e->key() == Qt::Key_Return)
@@ -76,10 +81,10 @@ public:
 
 public:
     QString selected(void) { return selected_; }
+    int exec(QTextEdit*);
 
 protected:
     virtual void showEvent(QShowEvent*);
-    virtual QSize sizeHint() const { return QSize(50, 20); }
 
 private Q_SLOTS:
     void onItemActivated(QListWidgetItem*);
