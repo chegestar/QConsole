@@ -23,9 +23,50 @@
 #include <QDebug>
 #include <QVBoxLayout>
 #include <QApplication>
+#include <QScrollBar>
+#include <QDesktopWidget>
 
 #define USE_POPUP_COMPLETER
 #define WRITE_ONLY QIODevice::WriteOnly
+
+QSize PopupListWidget::sizeHint() const
+{
+    QAbstractItemModel *model = this->model();
+    QAbstractItemDelegate *delegate = this->itemDelegate();
+    const QStyleOptionViewItem sovi;
+    QMargins margin = this->contentsMargins();
+
+    const int vOffset = margin.top() + margin.bottom();
+    const int hOffset = margin.left() + margin.right();
+
+    bool vScrollOn = false;
+    int height = 0;
+    int width = 0;
+    for (int i=0; i<this->count(); ++i) {
+        QModelIndex index = model->index(i, 0);
+        QSize itemSizeHint = delegate->sizeHint(sovi, index);
+        if (itemSizeHint.width() > width)
+            width = itemSizeHint.width();
+
+        // height
+        const int nextHeight = height + itemSizeHint.height();
+        if (nextHeight + vOffset < this->maximumHeight())
+            height = nextHeight;
+        else {
+            // early termination
+            vScrollOn = true;
+            break;
+        }
+    }
+
+    QSize sizeHint(width + hOffset, 0);
+    sizeHint.setHeight(height + vOffset);
+    if (vScrollOn) {
+        int scrollWidth = this->verticalScrollBar()->sizeHint().width();
+        sizeHint.setWidth(sizeHint.width() + scrollWidth);
+    }
+    return sizeHint;
+}
 
 PopupCompleter::PopupCompleter(const QStringList& sl, QWidget *parent)
     : QDialog(parent, Qt::Popup)
@@ -33,15 +74,20 @@ PopupCompleter::PopupCompleter(const QStringList& sl, QWidget *parent)
     setModal(true);
 
     listWidget_ = new PopupListWidget();
+    listWidget_->setMaximumHeight(200);
+    qDebug() << "sizeHint(): " << listWidget_->sizeHint();
     Q_FOREACH(QString str, sl) {
         QListWidgetItem *item = new QListWidgetItem;
         item->setText(str);
         listWidget_->addItem(item);
     }
+    qDebug() << "sizeHint(): " << listWidget_->sizeHint();
+    listWidget_->setFixedSize(listWidget_->sizeHint());
 
     QLayout *layout = new QVBoxLayout();
-    layout->addWidget(listWidget_);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
     layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(listWidget_);
 
     setLayout(layout);
 
@@ -63,6 +109,29 @@ void PopupCompleter::onItemActivated(QListWidgetItem *event)
 {
     selected_ = event->text();
     done(QDialog::Accepted);
+}
+
+/**
+ * @brief execute PopupCompleter at appropriate position.
+ *
+ * @param parent Parent of this popup completer. usually QConsole.
+ * @return see QDialog::exec
+ * @see QDialog::exec
+ */
+int PopupCompleter::exec(QTextEdit *parent)
+{
+    QSize popupSizeHint = this->sizeHint();
+    QRect cursorRect = parent->cursorRect();
+    QPoint globalPt = parent->mapToGlobal(cursorRect.bottomRight());
+    QDesktopWidget *dsk = QApplication::desktop();
+    QRect screenGeom = dsk->screenGeometry(dsk->screenNumber(this));
+    if (globalPt.y() + popupSizeHint.height() > screenGeom.height()) {
+        globalPt = parent->mapToGlobal(cursorRect.topRight());
+        globalPt.setY(globalPt.y() - popupSizeHint.height());
+    }
+    this->move(globalPt);
+    this->setFocus();
+    return QDialog::exec();
 }
 
 /**
@@ -218,7 +287,7 @@ void QConsole::handleTabKeyPress()
         textCursor().insertText("\t");
     else {
         if (sl.count() == 1)
-            replaceCurrentCommand(commandPrefix + sl[0] + " ");
+            replaceCurrentCommand(commandPrefix + sl[0]);
         else
         {
             // common word completion
@@ -227,11 +296,7 @@ void QConsole::handleTabKeyPress()
 
 #ifdef USE_POPUP_COMPLETER
             PopupCompleter *popup = new PopupCompleter(sl);
-            QPoint globalPt = mapToGlobal(cursorRect().bottomRight());
-
-            popup->move(globalPt);
-            popup->setFocus();
-            if (popup->exec() == QDialog::Accepted)
+            if (popup->exec(this) == QDialog::Accepted)
                 replaceCurrentCommand(commandPrefix + popup->selected());
             delete popup;
 #else
