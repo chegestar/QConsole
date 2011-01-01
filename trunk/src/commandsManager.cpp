@@ -49,8 +49,8 @@ commandsManager *commandsManager::getInstance(Tcl_Interp* interp)
    {
       theInstance = new commandsManager(interp);
       //Register the help command
-      TclCallBack<commandsManager>::registerMethod(theInstance, "help",
-            &commandsManager::help, "displays this help message");
+      TclCallBack<commandsManager>::registerMethod(theInstance, (char*)"help",
+            &commandsManager::help, (char*)"displays this help message");
    }
    return theInstance;
 }

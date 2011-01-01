@@ -58,7 +58,9 @@ int main( int argc, char ** argv )
     Tcl_SetServiceMode (TCL_SERVICE_ALL);
     Qtk_InitNotifier( &a );
     //Register the msgbox command
-    commandsManager::getInstance(interp)->registerFunction("msgbox" , (commandsManager::commandType) CallQMessageBox, "Shows the Qt message box");
+    commandsManager::getInstance(interp)->registerFunction((char*)"msgbox" ,
+                                                           (commandsManager::commandType) CallQMessageBox,
+                                                           (char*)"Shows the Qt message box");
     //Create and show the main window
     QMainWindow mw;
     mw.setWindowTitle("Qt/Tcl Console [By Houssem BDIOUI]");
