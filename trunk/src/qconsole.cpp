@@ -190,6 +190,7 @@ void QConsole::reset(const QString &welcomeText)
 {
     clear();
     append(welcomeText);
+    append("");
 
     //init attributes
     historyIndex = 0;
@@ -200,12 +201,13 @@ void QConsole::reset(const QString &welcomeText)
 //QConsole constructor (init the QTextEdit & the attributes)
 QConsole::QConsole(QWidget *parent, const QString &welcomeText)
     : QTextEdit(parent), errColor(Qt::red),
-      outColor(Qt::blue), completionColor(Qt::darkGreen),
-      promptLength(0), promptParagraph(0)
+    outColor(Qt::blue), completionColor(Qt::darkGreen),
+    promptLength(0), promptParagraph(0)
 {
     QPalette palette = QApplication::palette();
     setCmdColor(palette.text().color());
-
+    //Disable undo/redo
+    setUndoRedoEnabled(false);
     //resets the console
     reset(welcomeText);
 
@@ -240,17 +242,26 @@ void QConsole::displayPrompt()
     QTextCursor cur = textCursor();
     cur.insertText(prompt);
     cur.movePosition(QTextCursor::EndOfLine);
-
+    setTextCursor(cur);
     //Saves the paragraph number of the prompt
     promptParagraph = cur.blockNumber();
+}
+
+void QConsole::restoreOldPosition()
+{
+    QTextCursor cur = textCursor();
+    cur.setPosition(oldPosition);
+    setTextCursor(cur);
 }
 
 
 //Reimplemented mouse press event
 void QConsole::mousePressEvent( QMouseEvent *e )
 {
-    //Saves the old position of the cursor before any mouse click
-    oldPosition = textCursor().position();
+    if (isInEditionZone()) {
+        //Saves the old position of the cursor before any mouse click
+        oldPosition = textCursor().position();
+    }
     //Call the parent implementation
     QTextEdit::mousePressEvent( e );
 }
@@ -263,9 +274,7 @@ void QConsole::mouseReleaseEvent( QMouseEvent *e )
 
     //Undo the new cursor position if it is out of the edition zone
     if (!isInEditionZone()) {
-        QTextCursor cur = textCursor();
-        cur.setPosition(oldPosition);
-        setTextCursor(cur);
+        restoreOldPosition();
     }
 }
 
@@ -355,8 +364,11 @@ void QConsole::keyPressEvent( QKeyEvent *e )
             append("");
             displayPrompt();
             break;
-
         default:
+            if (!isInEditionZone())
+            {
+                return;
+            }
             break;
         }
     } else {
@@ -365,16 +377,13 @@ void QConsole::keyPressEvent( QKeyEvent *e )
             handleTabKeyPress();
             return;
 
-        case Qt::Key_Left:
-            if (handleBackspaceKeyPress())
-                return;
-            break;
-
+        case Qt::Key_Enter:
         case Qt::Key_Return:
             handleReturnKeyPress();
             // ignore return key
             return;
 
+        case Qt::Key_Left:
         case Qt::Key_Backspace:
             if (handleBackspaceKeyPress())
                 return;
@@ -385,19 +394,28 @@ void QConsole::keyPressEvent( QKeyEvent *e )
             return;
 
         case Qt::Key_Down:
-            if (++historyIndex >= history.size())
-                historyIndex = history.size() - 1;
-            replaceCurrentCommand(history[historyIndex]);
+            if (history.count())
+            {
+                if (++historyIndex >= history.size())
+                    historyIndex = history.size() - 1;
+                replaceCurrentCommand(history[historyIndex]);
+            }
             return;
 
         case Qt::Key_Up:
-            if (historyIndex) {
-                historyIndex--;
+            if (history.count())
+            {
+                if (historyIndex)
+                    historyIndex--;
                 replaceCurrentCommand(history[historyIndex]);
             }
             return;
 
         default:
+            if (!isInEditionZone())
+            {
+                return;
+            }
             break;
         }
     }
@@ -405,9 +423,7 @@ void QConsole::keyPressEvent( QKeyEvent *e )
     oldPosition = textCursor().position();
     QTextEdit::keyPressEvent( e );
     if (!isInEditionZone()) {
-        QTextCursor cur = textCursor();
-        cur.setPosition(oldPosition);
-        setTextCursor(cur);
+        restoreOldPosition();
     }
 }
 
@@ -467,7 +483,8 @@ QString QConsole::interpretCommand(const QString &command, int *res)
 }
 
 //execCommand(QString) executes the command and displays back its result
-bool QConsole::execCommand(const QString &command, bool writeCommand, bool showPrompt)
+bool QConsole::execCommand(const QString &command, bool writeCommand,
+                           bool showPrompt, QString *result)
 {
     //Display the prompt with the command first
     if (writeCommand)
@@ -487,6 +504,11 @@ bool QConsole::execCommand(const QString &command, bool writeCommand, bool showP
         setTextColor(outColor);
     else
         setTextColor(errColor);
+
+    if (result)
+    {
+        *result = strRes;
+    }
 
     if (!(strRes.isEmpty() || strRes.endsWith("\n")))
         strRes.append("\n");
@@ -542,6 +564,6 @@ QMenu * QConsole::createPopupMenu (const QPoint &)
 //when clicking outside of the edition zone
 void QConsole::paste()
 {
-    //setCursorPosition(oldPara, oldIndex );
+    restoreOldPosition();
     QTextEdit::paste();
 }

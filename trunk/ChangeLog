@@ -13,7 +13,8 @@ Version 3.0
 - QConsole class:
    * Identified and removed some conditional jumps using
      uninitialized variables
-
+   * execCommand() can now return a value as a the result of the command
+   * Undo/Redo disabled
 
 Version 2.0
 ===========
