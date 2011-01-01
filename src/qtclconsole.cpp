@@ -54,14 +54,14 @@ int ConsoleError(ClientData, CONST char * buf,
 
 Tcl_ChannelType consoleOutputChannelType =
 {
-    "console1", NULL, NULL, NULL, ConsoleOutput,
+    (char*)"console1", NULL, NULL, NULL, ConsoleOutput,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL
 };
 
 Tcl_ChannelType consoleErrorChannelType =
 {
-    "console2", NULL, NULL, NULL, ConsoleError,
+    (char*)"console2", NULL, NULL, NULL, ConsoleError,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL
 };
@@ -142,16 +142,16 @@ QtclConsole *QtclConsole::getInstance(QWidget *parent, const QString &welcomeTex
 QtclConsole::QtclConsole(QWidget *parent, const QString &welcomeText) : QConsole(parent, welcomeText)
 {
     //Register the msgbox command
-    TclCallBack<QtclConsole>::registerMethod(this, "history", &QtclConsole::showHistory,
-       "Shows the commands history");
+    TclCallBack<QtclConsole>::registerMethod(this, (char*)"history", &QtclConsole::showHistory,
+       (char*)"Shows the commands history");
 
     //Register the set_prompt command
-    TclCallBack<QtclConsole>::registerMethod(this, "set_prompt", &QtclConsole::setPrompt,
-       "Set a new prompt");
+    TclCallBack<QtclConsole>::registerMethod(this, (char*)"set_prompt", &QtclConsole::setPrompt,
+       (char*)"Set a new prompt");
 
     //Register the set_prompt command
-    TclCallBack<QtclConsole>::registerMethod(this, "save_script", &QtclConsole::saveScript,
-       "Saves a script of executed commands");
+    TclCallBack<QtclConsole>::registerMethod(this, (char*)"save_script", &QtclConsole::saveScript,
+       (char*)"Saves a script of executed commands");
 
     //Get the Tcl interpreter
     interp = commandsManager::getInstance()->tclInterp();
