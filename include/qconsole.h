@@ -107,7 +107,8 @@ public:
     //set the prompt of the console
     void setPrompt(const QString &prompt, bool display = true);
     //execCommand(QString) executes the command and displays back its result
-    bool execCommand(const QString &command, bool writeCommand = true, bool showPrompt = true);
+    bool execCommand(const QString &command, bool writeCommand = true,
+                     bool showPrompt = true, QString *result = NULL);
     //saves a file script
     int saveScript(const QString &fileName);
     //loads a file script
@@ -123,6 +124,9 @@ public:
     void setFont(QFont f) {setCurrentFont(f);}
 
 private:
+    //Restore old cusor position: usually used to come back
+    //the edition zone
+    void restoreOldPosition();
     // Redefined virtual methods
     void mouseReleaseEvent(QMouseEvent *e);
     void mousePressEvent(QMouseEvent *e);

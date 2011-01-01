@@ -157,26 +157,30 @@ QtclConsole::QtclConsole(QWidget *parent, const QString &welcomeText) : QConsole
     interp = commandsManager::getInstance()->tclInterp();
 
     //init tcl channels to redirect them to the console
-    Tcl_Channel consoleChannel = Tcl_CreateChannel(&consoleOutputChannelType,
-        "console1", (ClientData) TCL_STDOUT, TCL_WRITABLE);
-    if (consoleChannel)
+    //stdout
+    Tcl_Channel outConsoleChannel = Tcl_CreateChannel(&consoleOutputChannelType, "stdout",
+                                                      (ClientData) TCL_STDOUT, TCL_WRITABLE);
+    if (outConsoleChannel)
     {
-        Tcl_SetChannelOption(NULL, consoleChannel,
-            "-translation", "lf");
-        Tcl_SetChannelOption(NULL, consoleChannel,
-            "-buffering", "none");
+        Tcl_SetChannelOption(NULL, outConsoleChannel,
+                             "-translation", "lf");
+        Tcl_SetChannelOption(NULL, outConsoleChannel,
+                             "-buffering", "none");
+        Tcl_SetStdChannel(outConsoleChannel, TCL_STDOUT);
+        Tcl_RegisterChannel(NULL, outConsoleChannel);
     }
-    Tcl_SetStdChannel(consoleChannel, TCL_STDOUT);
-    consoleChannel = Tcl_CreateChannel(&consoleErrorChannelType, "console2",
-        (ClientData) TCL_STDERR, TCL_WRITABLE);
-    if (consoleChannel)
+    //stderr
+    Tcl_Channel errConsoleChannel = Tcl_CreateChannel(&consoleErrorChannelType, "stderr",
+                                          (ClientData) TCL_STDERR, TCL_WRITABLE);
+    if (errConsoleChannel)
     {
-        Tcl_SetChannelOption(NULL, consoleChannel,
-            "-translation", "lf");
-        Tcl_SetChannelOption(NULL, consoleChannel,
-            "-buffering", "none");
+        Tcl_SetChannelOption(NULL, errConsoleChannel,
+                             "-translation", "lf");
+        Tcl_SetChannelOption(NULL, errConsoleChannel,
+                             "-buffering", "none");
+        Tcl_SetStdChannel(errConsoleChannel, TCL_STDERR);
+        Tcl_RegisterChannel(NULL, errConsoleChannel);
     }
-    Tcl_SetStdChannel(consoleChannel, TCL_STDERR);
 
     //set the Tcl Prompt
     QConsole::setPrompt("QTcl shell> ");
