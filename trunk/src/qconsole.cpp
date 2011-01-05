@@ -26,7 +26,6 @@
 #include <QScrollBar>
 #include <QDesktopWidget>
 
-#define USE_POPUP_COMPLETER
 #define WRITE_ONLY QIODevice::WriteOnly
 
 QSize PopupListWidget::sizeHint() const
@@ -200,8 +199,8 @@ void QConsole::reset(const QString &welcomeText)
 
 //QConsole constructor (init the QTextEdit & the attributes)
 QConsole::QConsole(QWidget *parent, const QString &welcomeText)
-    : QTextEdit(parent), errColor(Qt::red),
-    outColor(Qt::blue), completionColor(Qt::darkGreen),
+    : QTextEdit(parent), errColor_(Qt::red),
+    outColor_(Qt::blue), completionColor(Qt::darkGreen),
     promptLength(0), promptParagraph(0)
 {
     QPalette palette = QApplication::palette();
@@ -238,7 +237,7 @@ void QConsole::setPrompt(const QString &newPrompt, bool display)
 void QConsole::displayPrompt()
 {
     //displays the prompt
-    setTextColor(cmdColor);
+    setTextColor(cmdColor_);
     QTextCursor cur = textCursor();
     cur.insertText(prompt);
     cur.movePosition(QTextCursor::EndOfLine);
@@ -501,9 +500,9 @@ bool QConsole::execCommand(const QString &command, bool writeCommand,
     QString strRes = interpretCommand(command, &res);
     //According to the return value, display the result either in red or in blue
     if (res == 0)
-        setTextColor(outColor);
+        setTextColor(outColor_);
     else
-        setTextColor(errColor);
+        setTextColor(errColor_);
 
     if (result)
     {

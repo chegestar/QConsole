@@ -11,6 +11,8 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 LIBS += -Wl,-E -lpython$(PYTHON_VERSION)
 
+DEFINES += USE_POPUP_COMPLETER
+
 unix {
   INCLUDEPATH += "$(PYTHON_PATH)/include/python$(PYTHON_VERSION)"
   LIBS += -L"$(PYTHON_PATH)/lib/python$(PYTHON_VERSION)/config" -lutil
