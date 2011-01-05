@@ -117,11 +117,32 @@ public:
     void clear();
     void reset(const QString &welcomeText = "");
     //cosmetic methods !
-    void setCmdColor(QColor c) {cmdColor = c;}
-    void setErrColor(QColor c) {errColor = c;}
-    void setOutColor(QColor c) {outColor = c;}
+
+    // @{
+    /// get/set command color
+    QColor cmdColor() const { return cmdColor_; }
+    void setCmdColor(QColor c) {cmdColor_ = c;}
+    // @}
+
+    // @{
+    /// get/set error color
+    QColor errColor() const { return errColor_; }
+    void setErrColor(QColor c) {errColor_ = c;}
+    // @}
+
+    // @{
+    /// get/set outout color
+    QColor outColor() const { return outColor_; }
+    void setOutColor(QColor c) {outColor_ = c;}
+    // @}
+
     void setCompletionColor(QColor c) {completionColor = c;}
+
+    // @{
+    /// get/set font
     void setFont(QFont f) {setCurrentFont(f);}
+    QFont font() const { return currentFont(); }
+    // @}
 
 private:
     //Restore old cusor position: usually used to come back
@@ -152,7 +173,7 @@ private:
 //protected attributes
 protected:
     //colors
-    QColor cmdColor, errColor, outColor, completionColor;
+    QColor cmdColor_, errColor_, outColor_, completionColor;
     // Old cursor position
     int oldPosition;
     // cached prompt length
