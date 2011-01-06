@@ -253,6 +253,15 @@ void QConsole::restoreOldPosition()
     setTextCursor(cur);
 }
 
+void QConsole::setFont(const QFont& f) {
+    QTextCharFormat format;
+    QTextCursor oldCursor = textCursor();
+    format.setFont(f);
+    selectAll();
+    textCursor().setBlockCharFormat(format);
+    setCurrentFont(f);
+    setTextCursor(oldCursor);
+}
 
 //Reimplemented mouse press event
 void QConsole::mousePressEvent( QMouseEvent *e )
