@@ -140,7 +140,7 @@ public:
 
     // @{
     /// get/set font
-    void setFont(QFont f) {setCurrentFont(f);}
+    void setFont(const QFont& f);
     QFont font() const { return currentFont(); }
     // @}
 
