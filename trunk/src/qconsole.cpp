@@ -319,7 +319,7 @@ void QConsole::handleTabKeyPress()
 #else
             setTextColor(completionColor);
             append(sl.join(", ") + "\n");
-            setTextColor(cmdColor);
+            setTextColor(cmdColor());
             displayPrompt();
             textCursor().insertText(commandPrefix + command);
 #endif
@@ -351,6 +351,41 @@ bool QConsole::handleBackspaceKeyPress()
     if (blk == promptParagraph && col == promptLength)
         return true;
     return false;
+}
+
+void QConsole::handleUpKeyPress()
+{
+    if (history.count())
+    {
+        QString command = getCurrentCommand();
+        do
+        {
+            if (historyIndex)
+                historyIndex--;
+            else
+            {
+                break;
+            }
+        } while(history[historyIndex] == command);
+        replaceCurrentCommand(history[historyIndex]);
+    }
+}
+
+void QConsole::handleDownKeyPress()
+{
+    if (history.count())
+    {
+        QString command = getCurrentCommand();
+        do
+        {
+            if (++historyIndex >= history.size())
+            {
+                historyIndex = history.size() - 1;
+                break;
+            }
+        } while(history[historyIndex] == command);
+        replaceCurrentCommand(history[historyIndex]);
+    }
 }
 
 void QConsole::setHome()
@@ -402,21 +437,11 @@ void QConsole::keyPressEvent( QKeyEvent *e )
             return;
 
         case Qt::Key_Down:
-            if (history.count())
-            {
-                if (++historyIndex >= history.size())
-                    historyIndex = history.size() - 1;
-                replaceCurrentCommand(history[historyIndex]);
-            }
+            handleDownKeyPress();
             return;
 
         case Qt::Key_Up:
-            if (history.count())
-            {
-                if (historyIndex)
-                    historyIndex--;
-                replaceCurrentCommand(history[historyIndex]);
-            }
+            handleUpKeyPress();
             return;
 
         default:
