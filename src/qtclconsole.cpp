@@ -29,7 +29,7 @@ int ConsoleOutput(ClientData, CONST char * buf,
     if (!lastCR)
     {
        QtclConsole *console = QtclConsole::getInstance();
-       console->setTextColor(console->outColor);
+       console->setTextColor(console->outColor());
        console->append(buf);
     }
     lastCR = !lastCR;
@@ -45,7 +45,7 @@ int ConsoleError(ClientData, CONST char * buf,
     if (!lastCR)
     {
        QtclConsole *console = QtclConsole::getInstance();
-       console->setTextColor(console->errColor);
+       console->setTextColor(console->errColor());
        console->append(buf);
     }
     lastCR = !lastCR;

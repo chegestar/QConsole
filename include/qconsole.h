@@ -213,6 +213,8 @@ private:
     void handleTabKeyPress();
     void handleReturnKeyPress();
     bool handleBackspaceKeyPress();
+    void handleUpKeyPress();
+    void handleDownKeyPress();
     void setHome();
 };
 
