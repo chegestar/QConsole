@@ -166,8 +166,8 @@ QtclConsole::QtclConsole(QWidget *parent, const QString &welcomeText) : QConsole
                              "-translation", "lf");
         Tcl_SetChannelOption(NULL, outConsoleChannel,
                              "-buffering", "none");
+        Tcl_RegisterChannel(interp, outConsoleChannel);
         Tcl_SetStdChannel(outConsoleChannel, TCL_STDOUT);
-        Tcl_RegisterChannel(NULL, outConsoleChannel);
     }
     //stderr
     Tcl_Channel errConsoleChannel = Tcl_CreateChannel(&consoleErrorChannelType, "stderr",
@@ -178,8 +178,8 @@ QtclConsole::QtclConsole(QWidget *parent, const QString &welcomeText) : QConsole
                              "-translation", "lf");
         Tcl_SetChannelOption(NULL, errConsoleChannel,
                              "-buffering", "none");
+        Tcl_RegisterChannel(interp, errConsoleChannel);
         Tcl_SetStdChannel(errConsoleChannel, TCL_STDERR);
-        Tcl_RegisterChannel(NULL, errConsoleChannel);
     }
 
     //set the Tcl Prompt
