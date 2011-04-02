@@ -25,7 +25,6 @@
 #include <QTextEdit>
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <QMenu>
 
 #include <QDialog>
 #include <QListWidget>
@@ -145,17 +144,7 @@ public:
     // @}
 
 private:
-    //Restore old cusor position: usually used to come back
-    //the edition zone
-    void restoreOldPosition();
-    // Redefined virtual methods
-    void mouseReleaseEvent(QMouseEvent *e);
-    void mousePressEvent(QMouseEvent *e);
-    //void mouseDoubleClickEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent * e);
-    void paste();
-    //Just to disable the popup menu
-    QMenu * createPopupMenu (const QPoint &pos);
     //Return false if the command is incomplete (e.g. unmatched braces)
     virtual bool isCommandComplete(const QString &command);
     //Get the command to validate
@@ -167,15 +156,15 @@ private:
     //Test wether the cursor is in the edition zone
     bool isInEditionZone();
 
-    //displays redirected stdout/stderr
-    //void stdReceived(QTextIStream *s);
+    //Test wether the selection is in the edition zone
+    bool isSelectionInEditionZone();
+    //Change paste behaviour
+    void insertFromMimeData(const QMimeData *);
 
 //protected attributes
 protected:
     //colors
     QColor cmdColor_, errColor_, outColor_, completionColor;
-    // Old cursor position
-    int oldPosition;
     // cached prompt length
     int promptLength;
     // The prompt string
@@ -190,6 +179,8 @@ protected:
     int promptParagraph;
 
 protected:
+    //Implement paste with middle mouse button
+    void mousePressEvent(QMouseEvent*);
     //execute a validated command (should be reimplemented and called at the end)
     //the return value of the function is the string result
     //res must hold back the return value of the command (0: passed; else: error)
@@ -201,7 +192,6 @@ protected:
 
 // Redefined virtual slots
 private Q_SLOTS:
-
     //displays the prompt
     void displayPrompt();
 
@@ -215,7 +205,7 @@ private:
     bool handleBackspaceKeyPress();
     void handleUpKeyPress();
     void handleDownKeyPress();
-    void setHome();
+    void setHome(bool);
 };
 
 #endif

@@ -1,12 +1,4 @@
-- Tcl:
-  * puts does'nt output on console
 - QConsole:
-  * Disable Undo
-  * Home don't work well in multi-line commands
   * We still can write outside edition zone (using mouse tricks)
-  * Add support for Ctrl+C : example, stop current command execution
+  * Improve support for Ctrl+C : example, stop current command execution
   * Implement a pager
-  * Shift + Home does'nt select the line
-  * Delete can select text outside of edition zone
-  * Allow selection outside of edition zone (event with dbl click) in order to copy
-  * Implement paste using middle key

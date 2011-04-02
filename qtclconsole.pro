@@ -5,7 +5,7 @@
 TEMPLATE = app
 DEPENDPATH += include src ui
 INCLUDEPATH += . include "$(TCL_PATH)/include"
-CONFIG  += warn_on relase
+CONFIG  += warn_on relase console
 
 UI_DIR = .ui
 MOC_DIR = .moc
