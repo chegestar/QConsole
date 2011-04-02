@@ -33,10 +33,19 @@ QSize PopupListWidget::sizeHint() const
     QAbstractItemModel *model = this->model();
     QAbstractItemDelegate *delegate = this->itemDelegate();
     const QStyleOptionViewItem sovi;
+    int left, top, right, bottom;
+ #if QT_VERSION >= 0x040600
     QMargins margin = this->contentsMargins();
 
-    const int vOffset = margin.top() + margin.bottom();
-    const int hOffset = margin.left() + margin.right();
+    top = margin.top();
+    bottom = margin.bottom();
+    left = margin.left();
+    right = margin.right();
+#else
+    getContentsMargins(&left, &top, &right, &bottom);
+#endif
+    const int vOffset = top + bottom;
+    const int hOffset = left + right;
 
     bool vScrollOn = false;
     int height = 0;
@@ -207,6 +216,8 @@ QConsole::QConsole(QWidget *parent, const QString &welcomeText)
     setCmdColor(palette.text().color());
     //Disable undo/redo
     setUndoRedoEnabled(false);
+    //Disables context menu
+    setContextMenuPolicy(Qt::NoContextMenu);
     //resets the console
     reset(welcomeText);
 
@@ -246,13 +257,6 @@ void QConsole::displayPrompt()
     promptParagraph = cur.blockNumber();
 }
 
-void QConsole::restoreOldPosition()
-{
-    QTextCursor cur = textCursor();
-    cur.setPosition(oldPosition);
-    setTextCursor(cur);
-}
-
 void QConsole::setFont(const QFont& f) {
     QTextCharFormat format;
     QTextCursor oldCursor = textCursor();
@@ -261,29 +265,6 @@ void QConsole::setFont(const QFont& f) {
     textCursor().setBlockCharFormat(format);
     setCurrentFont(f);
     setTextCursor(oldCursor);
-}
-
-//Reimplemented mouse press event
-void QConsole::mousePressEvent( QMouseEvent *e )
-{
-    if (isInEditionZone()) {
-        //Saves the old position of the cursor before any mouse click
-        oldPosition = textCursor().position();
-    }
-    //Call the parent implementation
-    QTextEdit::mousePressEvent( e );
-}
-
-//Reimplemented mouse release event
-void QConsole::mouseReleaseEvent( QMouseEvent *e )
-{
-    //Call the parent implementation
-    QTextEdit::mouseReleaseEvent( e );
-
-    //Undo the new cursor position if it is out of the edition zone
-    if (!isInEditionZone()) {
-        restoreOldPosition();
-    }
 }
 
 //Give suggestions to autocomplete a command (should be reimplemented)
@@ -388,11 +369,17 @@ void QConsole::handleDownKeyPress()
     }
 }
 
-void QConsole::setHome()
+void QConsole::setHome(bool select)
 {
     QTextCursor cursor = textCursor();
-    cursor.movePosition(QTextCursor::StartOfLine);
-    cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, promptLength);
+    cursor.movePosition(QTextCursor::StartOfBlock, select ? QTextCursor::KeepAnchor :
+                                                           QTextCursor::MoveAnchor);
+    if (textCursor().blockNumber() == promptParagraph)
+    {
+        cursor.movePosition(QTextCursor::Right, select ? QTextCursor::KeepAnchor :
+                                                         QTextCursor::MoveAnchor,
+                            promptLength);
+    }
     setTextCursor(cursor);
 }
 
@@ -400,52 +387,63 @@ void QConsole::setHome()
 void QConsole::keyPressEvent( QKeyEvent *e )
 {
     // control is pressed
-    if (e->modifiers() & Qt::ControlModifier) {
-        switch (e->key()) {
-        case Qt::Key_C:
+    if ((e->modifiers() & Qt::ControlModifier) && (e->key() == Qt::Key_C))
+    {
+        if (isSelectionInEditionZone())
+        {
             //If Ctrl + C pressed, then undo the current command
             append("");
             displayPrompt();
-            break;
-        default:
-            if (!isInEditionZone())
-            {
-                return;
-            }
-            break;
+            return;
         }
     } else {
         switch (e->key()) {
         case Qt::Key_Tab:
-            handleTabKeyPress();
+            if (isSelectionInEditionZone())
+            {
+                handleTabKeyPress();
+            }
             return;
 
         case Qt::Key_Enter:
         case Qt::Key_Return:
-            handleReturnKeyPress();
-            // ignore return key
+            if (isSelectionInEditionZone())
+            {
+                handleReturnKeyPress();
+            }
             return;
 
-        case Qt::Key_Left:
         case Qt::Key_Backspace:
-            if (handleBackspaceKeyPress())
+            if (handleBackspaceKeyPress() || !isSelectionInEditionZone())
                 return;
             break;
 
         case Qt::Key_Home:
-            setHome();
+            setHome(e->modifiers() & Qt::ShiftModifier);
             return;
 
         case Qt::Key_Down:
-            handleDownKeyPress();
+            if (isInEditionZone())
+            {
+                handleDownKeyPress();
+            }
             return;
 
         case Qt::Key_Up:
-            handleUpKeyPress();
+            if (isInEditionZone())
+            {
+                handleUpKeyPress();
+            }
             return;
 
+        //Default behaviour
+        case Qt::Key_End:
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+            break;
+
         default:
-            if (!isInEditionZone())
+            if (!isSelectionInEditionZone())
             {
                 return;
             }
@@ -453,11 +451,7 @@ void QConsole::keyPressEvent( QKeyEvent *e )
         }
     }
 
-    oldPosition = textCursor().position();
     QTextEdit::keyPressEvent( e );
-    if (!isInEditionZone()) {
-        restoreOldPosition();
-    }
 }
 
 //Get the current command
@@ -496,6 +490,27 @@ bool QConsole::isInEditionZone()
     const int para = textCursor().blockNumber();
     const int index = textCursor().columnNumber();
     return (para > promptParagraph) || ( (para == promptParagraph) && (index >= promptLength) );
+}
+
+//Tests whether the current selection is in th edition zone or not
+bool QConsole::isSelectionInEditionZone()
+{
+    QTextCursor cursor(document());
+    int range[2];
+
+    range[0] = textCursor().selectionStart();
+    range[1] = textCursor().selectionEnd();
+    for (int i = 0; i < 2; i++)
+    {
+        cursor.setPosition(range[i]);
+        int para = cursor.blockNumber();
+        int index = cursor.columnNumber();
+        if ((para <= promptParagraph) && ( (para != promptParagraph) || (index < promptLength) ))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 //Basically, puts the command into the history list
@@ -587,16 +602,25 @@ int QConsole::loadScript(const QString &fileName)
     return 0;
 }
 
-//Just disable the popup menu
-QMenu * QConsole::createPopupMenu (const QPoint &)
+//Change paste behaviour
+void QConsole::insertFromMimeData(const QMimeData *source)
 {
-    return NULL;
+    if (isSelectionInEditionZone())
+    {
+        QTextEdit::insertFromMimeData(source);
+    }
 }
 
-//Allows pasting with middle mouse button (x window)
-//when clicking outside of the edition zone
-void QConsole::paste()
+//Implement paste with middle mouse button
+void QConsole::mousePressEvent(QMouseEvent* event)
 {
-    restoreOldPosition();
-    QTextEdit::paste();
+    if (event->button() == Qt::MidButton)
+    {
+        copy();
+        QTextCursor cursor = cursorForPosition(event->pos());
+        setTextCursor(cursor);
+        paste();
+        return;
+    }
+    QTextEdit::mousePressEvent(event);
 }

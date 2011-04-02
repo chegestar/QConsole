@@ -15,6 +15,15 @@ Version 3.0
      uninitialized variables
    * execCommand() can now return a value as a the result of the command
    * Undo/Redo disabled
+   * Navigating in history (up & down keys) skips identical commands
+     (Contributed by MARTINEAU Simon)
+   * Home now works well in multi-line commands (Shift+Home select the line)
+   * Disabled the popup menu
+   * Allow selection outside of edition zone (event with dbl click) in order to copy
+   * Several fixed bugs
+   * Paste using middle key : copy done automatically
+- TCL: 
+  * Solved stdout and stderr output (Thanks to linoux)
 
 Version 2.0
 ===========
