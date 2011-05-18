@@ -1,9 +1,9 @@
 /***************************************************************************
-                          commands.h  -  description
-                             -------------------
-    begin                : lun jun 27 2005
-    copyright            : (C) 2005 by houssem
-    email                : houssem@localhost
+													commands.h  -  description
+														 -------------------
+		begin                : lun jun 27 2005
+		copyright            : (C) 2005 by houssem
+		email                : houssem@localhost
  ***************************************************************************/
 
 /***************************************************************************

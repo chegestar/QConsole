@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2005 by Ulrich Ring
  *
  * This is a clone of the file unix/tclNotify.c from the
@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tclnotify.cpp,v 1.25 2004/03/08 08:33:40 ur Exp $
+ * RCS: @(#) $Id: tclnotify.h,v 1.3 2011/05/18 19:12:33 tbelair Exp $
  */
 
 #ifndef tclnotify_h_
@@ -48,7 +48,7 @@ class TclFileHandler : public QObject
 		int readyMask;
 		/* Events that have been seen since the
 		 * last time FileHandlerEventProc was called
-	 	 * for this file. */
+		 * for this file. */
 		QSocketNotifier *read;
 		QSocketNotifier *write;
 		QSocketNotifier *except;
