@@ -402,117 +402,128 @@ void QConsole::setHome(bool select)
 //Reimplemented key press event
 void QConsole::keyPressEvent( QKeyEvent *e )
 {
-
 	//If the user wants to copy or cut outside
-		//the editing area we perform a copy
-		if(textCursor().hasSelection())
+	//the editing area we perform a copy
+	if(textCursor().hasSelection())
+	{
+		if(e->modifiers() == Qt::CTRL)
 		{
-				if(e->modifiers() == Qt::CTRL)
-				{
-					if( e->matches(QKeySequence::Cut) )
-					{
-								e->accept();
-								if(!isInEditionZone())
-								{
-										copy();
-								}
-								else
-								{
-										cut();
-								}
-								return;
-					}
-					else if(e->matches(QKeySequence::Copy) )
-					{
-							e->accept();
-							copy();
-					}
-					else
-					{
-						QTextEdit::keyPressEvent( e );
-						return;
-					}
-				}
-		}
-/*
-		// if the cursor out of editing zone put it back first
-		if(!isInEditionZone())
-		{
-				 QTextCursor editCursor = textCursor();
-				 editCursor.setPosition(oldEditPosition);
-				 setTextCursor(editCursor);
-		}
-*/
-		// control is pressed
-		if ( (e->modifiers() & Qt::ControlModifier) && (e->key() == Qt::Key_C) )
-		{
-			if ( isSelectionInEditionZone())
+			if( e->matches(QKeySequence::Cut) )
 			{
-				//If Ctrl + C pressed, then undo the current commant
-				//append("");
-				//displayPrompt();
-
-				//(Thierry Belair:)I humbly suggest that ctrl+C copies the text, as is expected,
-				//and indicated in the contextual menu
-				copy();
+				e->accept();
+				if(!isInEditionZone())
+				{
+						copy();
+				}
+				else
+				{
+						cut();
+				}
 				return;
 			}
-
+			else if(e->matches(QKeySequence::Copy) )
+			{
+				e->accept();
+				copy();
+			}
+			else
+			{
+				QTextEdit::keyPressEvent( e );
+				return;
+			}
 		}
-		else {
-				switch (e->key()) {
-				case Qt::Key_Tab:
-					if(isSelectionInEditionZone())
-					{
-						handleTabKeyPress();
-					}
-						return;
+	}
+/*
+	// if the cursor out of editing zone put it back first
+	if(!isInEditionZone())
+	{
+		 QTextCursor editCursor = textCursor();
+		 editCursor.setPosition(oldEditPosition);
+		 setTextCursor(editCursor);
+	}
+*/
+	// control is pressed
+	if ( (e->modifiers() & Qt::ControlModifier) && (e->key() == Qt::Key_C) )
+	{
+		if ( isSelectionInEditionZone())
+		{
+			//If Ctrl + C pressed, then undo the current commant
+			//append("");
+			//displayPrompt();
 
-				case Qt::Key_Enter:
-				case Qt::Key_Return:
-						if (isSelectionInEditionZone())
-						{
-								handleReturnKeyPress();
-						}
-						// ignore return key
-						return;
+			//(Thierry Belair:)I humbly suggest that ctrl+C copies the text, as is expected,
+			//and indicated in the contextual menu
+			copy();
+			return;
+		}
 
-				case Qt::Key_Backspace:
-						if (handleBackspaceKeyPress() || !isSelectionInEditionZone())
-								return;
-						break;
+	}
+	else {
+		switch (e->key()) {
+		case Qt::Key_Tab:
+			if(isSelectionInEditionZone())
+			{
+				handleTabKeyPress();
+			}
+			return;
 
-				case Qt::Key_Home:
-					setHome(e->modifiers() & Qt::ShiftModifier);
-				case Qt::Key_Down:
-						if (isInEditionZone())
-						{
-								handleDownKeyPress();
-						}
-						return;
-				case Qt::Key_Up:
-						if (isInEditionZone())
-						{
-								 handleUpKeyPress();
-						}
-						return;
+		case Qt::Key_Enter:
+		case Qt::Key_Return:
+			if (isSelectionInEditionZone())
+			{
+					handleReturnKeyPress();
+			}
+			// ignore return key
+			return;
 
-				//Default behaviour
-				case Qt::Key_End:
-				case Qt::Key_Left:
-				case Qt::Key_Right:
-					break;
+		case Qt::Key_Backspace:
+			if (handleBackspaceKeyPress() || !isSelectionInEditionZone())
+				return;
+			break;
 
-				default:
-						if (!isSelectionInEditionZone())
-						{
-							return;
-						}
-						break;
+		case Qt::Key_Home:
+			setHome(e->modifiers() & Qt::ShiftModifier);
+		case Qt::Key_Down:
+			if (isInEditionZone())
+			{
+					handleDownKeyPress();
+			}
+			return;
+		case Qt::Key_Up:
+			if (isInEditionZone())
+			{
+					 handleUpKeyPress();
+			}
+			return;
+
+		//Default behaviour
+		case Qt::Key_End:
+		case Qt::Key_Left:
+		case Qt::Key_Right:
+			break;
+
+		default:
+			if (textCursor().hasSelection() ) {
+				if (!isSelectionInEditionZone())
+				{
+					moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
 				}
-		}
+				break;
+			}
+			else 
+			{ //no selection
+				//when typing normal characters,
+				//make sure the cursor is positionned in the
+				//edition zone
+				if ( !isInEditionZone() )
+				{
+					moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+				}
+			}
+		} //end of switch
+	} //end of else : no control pressed
 
-		QTextEdit::keyPressEvent( e );
+	QTextEdit::keyPressEvent( e );
 }
 
 //Get the current command
@@ -687,6 +698,7 @@ void QConsole::insertFromMimeData(const QMimeData *source)
 //Implement paste with middle mouse button
 void QConsole::mousePressEvent(QMouseEvent* event)
 {
+	oldPosition = textCursor().position();
 		if (event->button() == Qt::MidButton)
 		{
 				copy();
@@ -695,6 +707,7 @@ void QConsole::mousePressEvent(QMouseEvent* event)
 				paste();
 				return;
 		}
+		
 		QTextEdit::mousePressEvent(event);
 }
 
