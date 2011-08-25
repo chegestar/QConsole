@@ -52,19 +52,70 @@ int ConsoleError(ClientData, CONST char * buf,
 		return toWrite;
 }
 
+
+
+/*Tcl_DriverCloseProc(ClientData instanceData, Tcl_Interp* interp);*/
+int closeProcedureForBothTcl_ChannelType(ClientData instanceData, Tcl_Interp *interp){
+	return EINVAL;
+}
+
+
 Tcl_ChannelType consoleOutputChannelType =
 {
-		(char*)"console1", NULL, NULL, NULL, ConsoleOutput,
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, NULL
+	(char*)"console1", /* const char* typeName*/
+	NULL, /*Tcl_ChannelTypeVersion version*/
+	(closeProcedureForBothTcl_ChannelType) /*NULL*/, /*Tcl_DriverCloseProc* closeProc*/
+	NULL, /*Tcl_DriverInputProc* inputProc*/
+	ConsoleOutput, /*Tcl_DriverOutputProc* outputProc*/
+	NULL, /*Tcl_DriverSeekProc* seekProc*/
+	NULL, /*Tcl_DriverSetOptionProc*  setOptionProc*/
+	NULL, /*Tcl_DriverGetOptionProc* getOptionProc*/
+	NULL, /*Tcl_DriverWatchProc* watchProc*/
+	NULL, /*Tcl_DriverGetHandleProc* getHandleProc*/
+	NULL, /*Tcl_DriverClose2Proc* close2Proc*/
+	NULL, /*Tcl_DriverBlockModeProc* blockModeProc*/
+	NULL, /*Tcl_DriverFlushProc* flushProc*/
+	NULL, /*Tcl_DriverHandlerProc * handlerProc*/
+	NULL, /*Tcl_DriverWideSeekProc * wideSeekProc*/
+	NULL, /*Tcl_DriverThreadActionProc* threadActionProc*/
+	NULL /*Tcl_DriverTruncateProc* truncateProc*/
 };
 
+//Tcl_ChannelType consoleOutputChannelType =
+//{
+//		(char*)"console1", NULL, NULL, NULL, ConsoleOutput,
+//		NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+//		NULL, NULL, NULL, NULL
+//};
 Tcl_ChannelType consoleErrorChannelType =
 {
-		(char*)"console2", NULL, NULL, NULL, ConsoleError,
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-		NULL, NULL, NULL, NULL
+	(char*)"console2", /* const char* typeName*/
+   NULL, /*Tcl_ChannelTypeVersion version*/
+   (closeProcedureForBothTcl_ChannelType) /*NULL*/, /*Tcl_DriverCloseProc* closeProc*/
+   NULL, /*Tcl_DriverInputProc* inputProc*/
+	ConsoleError, /*Tcl_DriverOutputProc* outputProc*/
+   NULL, /*Tcl_DriverSeekProc* seekProc*/
+   NULL, /*Tcl_DriverSetOptionProc*  setOptionProc*/
+   NULL, /*Tcl_DriverGetOptionProc* getOptionProc*/
+   NULL, /*Tcl_DriverWatchProc* watchProc*/
+   NULL, /*Tcl_DriverGetHandleProc* getHandleProc*/
+   NULL, /*Tcl_DriverClose2Proc* close2Proc*/
+   NULL, /*Tcl_DriverBlockModeProc* blockModeProc*/
+	NULL, /*Tcl_DriverFlushProc* flushProc*/
+   NULL, /*Tcl_DriverHandlerProc * handlerProc*/
+   NULL, /*Tcl_DriverWideSeekProc * wideSeekProc*/
+   NULL, /*Tcl_DriverThreadActionProc* threadActionProc*/
+   NULL /*Tcl_DriverTruncateProc* truncateProc*/
 };
+
+
+
+//Tcl_ChannelType consoleErrorChannelType =
+//{
+//		(char*)"console2", NULL, NULL, NULL, ConsoleError,
+//		NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+//		NULL, NULL, NULL, NULL
+//};
 
 //callback method that implements the history command
 int QtclConsole::showHistory(ClientData, Tcl_Interp* interp, int argc, const char *argv[])
